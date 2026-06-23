@@ -1,0 +1,8 @@
+PyPDF2
+asgiref
+channels
+Django
+python-dotenv
+openai
+requests
+redis
