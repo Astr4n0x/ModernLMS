@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login | ModernLMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=2">
+    <style>
+        .auth-section.hidden {
+            display: none !important;
+        }
+    </style>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="background-animation">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+    </div>
+
+    <main class="login-wrapper">
+        <div class="login-container" id="login-container">
+
+            <div class="login-header">
+                <div class="brand">
+                    <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <span class="brand-text">ModernLMS</span>
+                </div>
+                <h1>Welcome Back!</h1>
+                <p>Log in to access your courses and materials.</p>
+            </div>
+
+            <!-- Login/Signup option removed from the top -->
+
+            {% if messages %}
+            <div class="error-banner show" id="error-banner" aria-live="polite">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{% for msg in messages %}{{ msg }}{% endfor %}</span>
+            </div>
+            {% else %}
+            <div class="error-banner" id="error-banner" aria-live="polite">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="error-message">Invalid credentials. Please try again.</span>
+            </div>
+            {% endif %}
+
+            <!-- LOGIN FORM -->
+            <form id="login-section" class="auth-section" method="POST" action="{% url 'accounts:login' %}">
+                {% csrf_token %}
+
+                <div class="input-group">
+                    <label for="userid" class="input-label">User ID or Phone Number</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="userid" name="userid" placeholder="Enter your ID or Phone" required autofocus>
+                        <div class="input-focus-border"></div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="password" class="input-label">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        <button type="button" class="password-toggle" data-target="password" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye toggle-icon"></i>
+                        </button>
+                        <div class="input-focus-border"></div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember" id="remember">
+                        <span class="custom-checkbox"></span>
+                        Remember me
+                    </label>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="login-btn action-btn">
+                    <span class="btn-text">Log In</span>
+                    <i class="fas fa-arrow-right btn-icon"></i>
+                    <div class="btn-spinner"><i class="fas fa-circle-notch fa-spin"></i></div>
+                </button>
+
+                <div class="login-footer">
+                    <p>New to ModernLMS? <a href="{% url 'accounts:signup' %}" class="signup-link-text">Sign up here</a></p>
+                </div>
+            </form>
+
+        </div>
+    </main>
+
+    <script src="{% static 'js/login.js' %}?v=2"></script>
+
+</body>
+</html>

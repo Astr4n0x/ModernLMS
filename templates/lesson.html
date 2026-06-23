@@ -1,0 +1,313 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}{{ node.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/lesson.css' %}?v=3">
+{% endblock %}
+
+{% block page_heading %}{{ node.course.title }} - Class {{ node.order }}{% endblock %}
+
+{% block content %}
+<!-- Custom Video Player -->
+<div class="video-container" id="custom-video-container">
+    <div class="aspect-ratio-wrapper">
+        <div id="yt-player"></div>
+        <div class="video-overlay" id="video-overlay">
+            <div class="big-play-btn" id="big-play-btn"><i class="fas fa-play"></i></div>
+            <div class="buffering-spinner" id="buffering-spinner"><i class="fas fa-circle-notch fa-spin"></i></div>
+        </div>
+    </div>
+    <!-- Custom Controls -->
+    <div class="custom-controls" id="custom-controls">
+        <div class="progress-container" id="progress-container">
+            <div class="progress-bar-bg"></div>
+            <div class="progress-filled" id="progress-filled" style="width: 0%;"></div>
+            <div class="progress-thumb" id="progress-thumb" style="left: 0%;"></div>
+        </div>
+        <div class="controls-main">
+            <div class="controls-left">
+                <button class="control-btn" id="play-pause-btn" aria-label="Play/Pause">
+                    <i class="fas fa-play" id="play-icon"></i>
+                </button>
+                <div class="volume-container">
+                    <button class="control-btn" id="mute-btn" aria-label="Mute/Unmute">
+                        <i class="fas fa-volume-up" id="volume-icon"></i>
+                    </button>
+                    <div class="volume-slider-wrapper" id="volume-slider-wrapper">
+                        <div class="volume-slider-bg"></div>
+                        <div class="volume-filled" id="volume-filled" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div class="time-display">
+                    <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
+                </div>
+            </div>
+            <div class="controls-right">
+                <div class="inline-select-group">
+                    <i class="fas fa-cog" style="color:#94a3b8; font-size:0.85rem; margin-right:4px;"></i>
+                    <select id="quality-select" class="toolbar-select">
+                        <option value="default">Auto</option>
+                        <option value="highres">1080p</option>
+                        <option value="hd720">720p</option>
+                        <option value="large">480p</option>
+                        <option value="medium">360p</option>
+                    </select>
+                </div>
+                <div class="inline-select-group">
+                    <i class="fas fa-tachometer-alt" style="color:#94a3b8; font-size:0.85rem; margin-right:4px;"></i>
+                    <select id="speed-select" class="toolbar-select">
+                        <option value="0.25">0.25x</option>
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="1.75">1.75x</option>
+                        <option value="2">2x</option>
+                    </select>
+                </div>
+                <button class="control-btn" id="fullscreen-btn" aria-label="Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Grid: Info + Comments -->
+<div class="content-grid">
+    <!-- Left: Lesson Info -->
+    <section class="lesson-info">
+        <div class="breadcrumb">
+            <span class="chapter-label">
+                {{ node.course.title }}
+                {% if node.get_ancestors %}
+                    {% for ancestor in node.get_ancestors %}
+                        › {{ ancestor.title }}
+                    {% endfor %}
+                {% endif %}
+            </span>
+        </div>
+        <h1 class="lesson-title">
+            {{ node.title }}
+            {% if is_live %}<span class="live-badge-inline"><span class="live-dot"></span> LIVE</span>{% endif %}
+            {% if node.status == 'past_live' %}<span class="status-tag recorded">Past Live</span>{% endif %}
+            {% if node.status == 'recorded' %}<span class="status-tag recorded">Recorded</span>{% endif %}
+        </h1>
+
+        <div class="instructor-info">
+            <img src="https://ui-avatars.com/api/?name={{ node.course.instructors.first.get_full_name|default:'Instructor'|urlencode }}&background=10B981&color=fff"
+                 alt="Instructor" class="instructor-avatar">
+            <div class="instructor-details">
+                <span class="instructor-name">
+                    {% for inst in node.course.instructors.all %}
+                        {{ inst.get_full_name|default:inst.username }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        Instructor
+                    {% endfor %}
+                </span>
+                <span class="instructor-role">{{ node.course.title }} Instructor</span>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="description">Overview</button>
+            <button class="tab-btn" data-tab="resources">Resources ({{ attachments.count }})</button>
+            <button class="tab-btn" data-tab="shortcuts">Keyboard Shortcuts</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div class="tab-content active" id="tab-description">
+            <div class="description-card">
+                <h3>What you will learn</h3>
+                {% if node.description %}
+                <p>{{ node.description }}</p>
+                {% else %}
+                <p>In this lesson, explore the core concepts of <strong>{{ node.title }}</strong>. Follow along and take notes for the best experience.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Resources Tab -->
+        <div class="tab-content" id="tab-resources">
+            <div class="resources-list">
+                {% if attachments %}
+                    {% for att in attachments %}
+                    <a href="{{ att.get_url }}" class="resource-item" target="_blank" rel="noopener">
+                        <i class="fas {{ att.get_icon }}"></i>
+                        <div class="resource-info">
+                            <span class="resource-name">{{ att.name }}</span>
+                            <span class="resource-size">{{ att.get_file_type_display }}</span>
+                        </div>
+                        <i class="fas fa-download download-icon"></i>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                        <i class="fas fa-folder-open" style="font-size: 2rem; margin-bottom: 0.75rem; display: block;"></i>
+                        <p>No resources attached to this lesson yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Shortcuts Tab -->
+        <div class="tab-content" id="tab-shortcuts">
+            <div class="shortcuts-grid">
+                <div class="shortcut-item"><span class="key">Space</span> <span class="action">Play / Pause</span></div>
+                <div class="shortcut-item"><span class="key">K</span> <span class="action">Play / Pause</span></div>
+                <div class="shortcut-item"><span class="key">F</span> <span class="action">Fullscreen</span></div>
+                <div class="shortcut-item"><span class="key">M</span> <span class="action">Mute</span></div>
+                <div class="shortcut-item"><span class="key">J</span> <span class="action">Rewind 10s</span></div>
+                <div class="shortcut-item"><span class="key">L</span> <span class="action">Forward 10s</span></div>
+                <div class="shortcut-item"><span class="key">←</span> <span class="action">Rewind 5s</span></div>
+                <div class="shortcut-item"><span class="key">→</span> <span class="action">Forward 5s</span></div>
+                <div class="shortcut-item"><span class="key">↑</span> <span class="action">Volume Up</span></div>
+                <div class="shortcut-item"><span class="key">↓</span> <span class="action">Volume Down</span></div>
+            </div>
+            <p class="shortcut-note">Ensure the video player is focused to use these shortcuts.</p>
+        </div>
+    </section>
+
+    <!-- Right Column: Comments & AI Assistant -->
+    <div class="right-column">
+        <section class="comments-section">
+            <h2 class="section-title">Class Discussion <span class="comment-count" id="comment-count">0</span></h2>
+
+            {% if comments_allowed %}
+            <div class="comment-input-area">
+                <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|urlencode }}&background=778873&color=fff"
+                     alt="User Profile" class="avatar-small">
+                <div class="comment-form">
+                    <div class="input-wrapper">
+                        <textarea id="comment-input" placeholder="Join the discussion... Ask a question or share your thoughts"></textarea>
+                        <div class="form-actions">
+                            <button type="button" class="btn-primary" id="post-btn" onclick="postComment()">Post Comment</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% elif node.status == 'past_live' or node.status == 'recorded' %}
+            <div style="padding: 1rem 1.25rem; background: rgba(245, 158, 11, 0.15); border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.3); color: var(--accent-color); font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <i class="fas fa-lock"></i>
+                <span>Comments are closed - this session has ended.</span>
+            </div>
+            {% endif %}
+
+            <div class="comments-list" id="comments-container">
+                <!-- Comments injected via JS polling or initial load -->
+            </div>
+
+            {% if not comments_allowed %}
+            <div id="comments-closed-msg" style="display:none;"></div>
+            {% endif %}
+        </section>
+
+        <!-- AI Study Assistant Card -->
+        <div class="ai-assistant-card">
+            <div class="ai-assistant-header">
+                <div class="ai-header-left">
+                    <span class="ai-sparkle-icon">
+                        <i class="fas fa-magic"></i>
+                    </span>
+                    <div>
+                        <h3 class="ai-card-title">AI Study Assistant</h3>
+                        <p class="ai-card-subtitle">Generate custom study notes, interactive flashcards, competitive MCQs, and summaries.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="ai-actions-grid">
+                <button class="ai-action-btn" id="btn-ai-notes" onclick="openAIModal('notes')">
+                    <span class="btn-icon"><i class="fas fa-file-alt"></i></span>
+                    <span class="btn-text">Creates notes</span>
+                    <span class="btn-status" id="status-notes"><i class="fas fa-circle-notch fa-spin"></i></span>
+                </button>
+                <button class="ai-action-btn" id="btn-ai-flashcards" onclick="openAIModal('flashcards')">
+                    <span class="btn-icon"><i class="fas fa-clone"></i></span>
+                    <span class="btn-text">Creates flashcards</span>
+                    <span class="btn-status" id="status-flashcards"><i class="fas fa-circle-notch fa-spin"></i></span>
+                </button>
+                <button class="ai-action-btn" id="btn-ai-mcqs" onclick="openAIModal('mcqs')">
+                    <span class="btn-icon"><i class="fas fa-list-ol"></i></span>
+                    <span class="btn-text">Creates MCQs</span>
+                    <span class="btn-status" id="status-mcqs"><i class="fas fa-circle-notch fa-spin"></i></span>
+                </button>
+                <button class="ai-action-btn" id="btn-ai-summary" onclick="openAIModal('summary')">
+                    <span class="btn-icon"><i class="fas fa-align-left"></i></span>
+                    <span class="btn-text">Creates short summaries</span>
+                    <span class="btn-status" id="status-summary"><i class="fas fa-circle-notch fa-spin"></i></span>
+                </button>
+                <button class="ai-action-btn" id="btn-ai-next_topics" onclick="openAIModal('next_topics')">
+                    <span class="btn-icon"><i class="fas fa-road"></i></span>
+                    <span class="btn-text">Suggests next topics</span>
+                    <span class="btn-status" id="status-next_topics"><i class="fas fa-circle-notch fa-spin"></i></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden data for JS -->
+<script>
+    const LESSON_EMBED_URL = "{{ embed_url|default:'' }}";
+    const IS_LIVE = {{ is_live|yesno:"true,false" }};
+    const COMMENTS_ALLOWED = {{ comments_allowed|yesno:"true,false" }};
+    const LIVE_NODE_ID = {{ node.id }};
+    const CSRF_TOKEN = "{{ csrf_token|default:'' }}";
+    const CURRENT_USER = "{{ user.get_full_name|default:user.username|default:'Guest' }}";
+</script>
+
+<!-- AI Study Assistant Modal -->
+<div id="ai-modal" class="ai-modal">
+    <div class="ai-modal-overlay" onclick="closeAIModal()"></div>
+    <div class="ai-modal-container">
+        <div class="ai-modal-header">
+            <div class="ai-modal-title-wrapper">
+                <i class="fas fa-magic ai-modal-icon"></i>
+                <h3 id="ai-modal-title" class="ai-modal-title">AI Study Assistant</h3>
+            </div>
+            <button class="ai-modal-close" onclick="closeAIModal()">&times;</button>
+        </div>
+        <div class="ai-modal-body">
+            <!-- Loading State -->
+            <div id="ai-modal-loading" class="ai-modal-loading" style="display: none;">
+                <div class="ai-loading-spinner">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                </div>
+                <h4 class="loading-title">Generating your content...</h4>
+                <p class="loading-desc">This may take up to 20-30 seconds as the AI reads course materials & attachments.</p>
+            </div>
+
+            <!-- Empty / Prompt State -->
+            <div id="ai-modal-empty" class="ai-modal-empty" style="display: none;">
+                <div class="empty-icon"><i class="fas fa-brain"></i></div>
+                <h4 id="empty-title">Content Not Generated</h4>
+                <p id="empty-desc">Would you like the AI to create custom study material from this class's resources & attachments?</p>
+                <button id="ai-generate-btn" class="ai-primary-btn" onclick="generateAIContent()">
+                    <i class="fas fa-magic"></i> Generate Now
+                </button>
+            </div>
+
+            <!-- Content Area -->
+            <div id="ai-modal-content" class="ai-modal-content" style="display: none;">
+                <!-- Filled dynamically by JS -->
+            </div>
+        </div>
+        <div class="ai-modal-footer">
+            <span id="ai-timestamp" class="ai-timestamp"></span>
+            <button id="ai-regenerate-btn" class="ai-outline-btn" style="display: none;" onclick="generateAIContent()">
+                <i class="fas fa-redo"></i> Regenerate
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="{% static 'js/lesson.js' %}?v=3"></script>
+{% endblock %}

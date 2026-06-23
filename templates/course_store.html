@@ -1,0 +1,261 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}All Courses{% endblock %}
+
+{% block extra_css %}
+<style>
+.store-header {
+    margin-bottom: 2rem;
+}
+.store-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color), #A1BC98);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.store-header p {
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+.course-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+.course-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(119,136,115,0.15);
+}
+.course-thumb {
+    width: 100%;
+    aspect-ratio: 1920 / 738;
+    background: linear-gradient(135deg, #778873 0%, #A1BC98 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+.course-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.course-body {
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.course-level {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+.course-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+.course-instructor {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+.course-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+.course-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: auto;
+}
+.course-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.course-price span {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+.btn-view {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.btn-view:hover { background: var(--primary-hover); }
+.enrolled-badge {
+    background: #d1fae5;
+    color: #065f46;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.stats-bar {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+.empty-state i {
+    font-size: 3rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+@media (max-width: 768px) {
+    .courses-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    .course-card {
+        flex-direction: row !important;
+        align-items: stretch;
+    }
+    .course-thumb {
+        width: 40% !important;
+        aspect-ratio: auto !important;
+    }
+    .course-body {
+        width: 60% !important;
+        padding: 0.75rem !important;
+    }
+    .course-desc {
+        display: none !important;
+    }
+    .course-title {
+        font-size: 0.95rem !important;
+        -webkit-line-clamp: 2 !important;
+        margin-bottom: 0.25rem !important;
+    }
+    .course-instructor {
+        margin-bottom: 0.25rem !important;
+    }
+    .course-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding-top: 0.5rem !important;
+    }
+    .course-price {
+        font-size: 1rem !important;
+    }
+    .btn-view {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        align-self: flex-end;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="store-header">
+    <h1>All Courses</h1>
+    <p>Browse all available courses. Click "View Details" to learn more and enroll.</p>
+</div>
+
+{% if messages %}
+{% for message in messages %}
+<div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}" style="margin-bottom:1rem;padding:0.75rem 1rem;border-radius:8px;{% if message.tags == 'error' %}background:#fee2e2;color:#991b1b;border:1px solid #fca5a5{% else %}background:#d1fae5;color:#065f46;border:1px solid #6ee7b7{% endif %}">
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+
+<div class="courses-grid">
+    {% for course in all_courses %}
+    <div class="course-card">
+        <div class="course-thumb">
+            {% if course.thumbnail %}
+            <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}">
+            {% else %}
+            <i class="fas fa-graduation-cap"></i>
+            {% endif %}
+        </div>
+        <div class="course-body">
+            {% if course.class_level %}
+            <div class="course-level">{{ course.class_level.name }}</div>
+            {% endif %}
+            <div class="course-title">{{ course.title }}</div>
+            {% if course.instructors.all %}
+            <div class="course-instructor"><i class="fas fa-chalkboard-teacher" style="margin-right:4px;"></i>
+                {% for inst in course.instructors.all %}
+                    {{ inst.get_full_name|default:inst.username }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="course-instructor"><i class="fas fa-chalkboard-teacher" style="margin-right:4px;"></i>
+                Staff
+            </div>
+            {% endif %}
+            <div class="stats-bar">
+                <span><i class="fas fa-book-open" style="margin-right:3px;"></i>{{ course.total_subjects }} Subjects</span>
+                <span><i class="fas fa-play-circle" style="margin-right:3px;"></i>{{ course.total_lessons }} Lessons</span>
+            </div>
+            <div class="course-desc">{{ course.description }}</div>
+            <div class="course-footer">
+                <div class="course-price">
+                    {% if course.price == 0 %}Free
+                    {% else %}৳{{ course.price }} <span>BDT</span>
+                    {% endif %}
+                </div>
+                {% if course.id in enrolled_ids %}
+                <div class="enrolled-badge"><i class="fas fa-check-circle"></i> Enrolled</div>
+                {% else %}
+                <a href="{% url 'courses:course_detail' course.id %}" class="btn-view">View Details</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1 / -1; text-align:center; padding: 4rem; color: var(--text-secondary);">
+        <i class="fas fa-book" style="font-size:3rem; margin-bottom:1rem;opacity:0.3;display:block;"></i>
+        <p>No courses are available yet. Check back soon!</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

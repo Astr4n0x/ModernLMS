@@ -1,0 +1,100 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}{{ node.title }} - {{ node.get_node_type_display }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}?v=2">
+<style>
+    @keyframes pulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.05); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div style="margin-bottom: 1rem;">
+        {% if node.parent %}
+        <a href="{% url 'courses:node_detail' node.parent.id %}"
+            style="display:inline-flex; align-items:center; gap:0.5rem; color:var(--text-secondary); text-decoration:none; font-size:0.875rem; transition:color 0.2s;">
+            <i class="fas fa-arrow-left"></i> Back to {{ node.parent.title }}
+        </a>
+        {% else %}
+        <a href="{% url 'courses:catalogue' %}"
+            style="display:inline-flex; align-items:center; gap:0.5rem; color:var(--text-secondary); text-decoration:none; font-size:0.875rem; transition:color 0.2s;">
+            <i class="fas fa-arrow-left"></i> Back to Courses
+        </a>
+        {% endif %}
+    </div>
+    <h1 class="page-title">{{ node.title }}</h1>
+    <p class="page-subtitle">
+        {{ node.course.title }}
+        {% if node.get_ancestors %}
+            {% for ancestor in node.get_ancestors %}
+                » {{ ancestor.title }}
+            {% endfor %}
+        {% endif %}
+    </p>
+</header>
+
+<div id="catalogue-content">
+    {% if not children %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            {% if node.node_type == 'subject' %}
+            <i class="fas fa-layer-group"></i>
+            {% else %}
+            <i class="fas fa-folder-open"></i>
+            {% endif %}
+        </div>
+        <h3>No content available</h3>
+        <p>There are no items added to this section yet.</p>
+    </div>
+    {% else %}
+    <div class="catalogue-grid">
+        {% for child in children %}
+        <div class="card animate-fade-in" onclick="window.location.href='{% url 'courses:node_detail' child.id %}'"
+            style="cursor: pointer;">
+            <div class="card-tag">{{ child.get_node_type_display }} {% if child.node_type == 'class' %}{{ child.order }}{% endif %}</div>
+            <h3 class="card-title">{{ child.title }}</h3>
+            <p class="card-desc">{{ child.description|default:"Explore content in this section."|truncatewords:15 }}</p>
+            
+            <div class="card-footer">
+                <div class="card-meta">
+                    {% if child.node_type == 'class' %}
+                        <span class="meta-item" style="display:flex; align-items:center; gap:0.5rem;">
+                            <i class="fas fa-video"></i>
+                            {% if child.status == 'live' %}
+                            <span style="font-size:0.7rem; background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 0.1rem 0.4rem; border-radius: 999px; animation: pulse 1s infinite;">🔴 LIVE</span>
+                            {% elif child.status == 'past_live' %}
+                            <span style="font-size:0.7rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 0.1rem 0.4rem; border-radius: 999px;">Past Live</span>
+                            {% elif child.status == 'recorded' %}
+                            <span style="font-size:0.7rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 0.1rem 0.4rem; border-radius: 999px;">Recorded</span>
+                            {% endif %}
+                        </span>
+                    {% else %}
+                        <span class="meta-item">
+                            <i class="fas fa-list-ul"></i> {{ child.children.count }} Items
+                        </span>
+                    {% endif %}
+                </div>
+                <div style="display:flex; flex-direction:column; gap: 0.5rem; width:60%;">
+                    <a href="{% url 'courses:node_detail' child.id %}"
+                        style="display:block; text-align:center; background:var(--primary-light); color:var(--item-link-color); padding:0.5rem; border-radius:6px; text-decoration:none; font-weight:500; transition:all 0.2s;">
+                        {% if child.node_type == 'class' %}
+                        <i class="fas fa-play-circle"></i> Enter Class
+                        {% else %}
+                        View Details
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

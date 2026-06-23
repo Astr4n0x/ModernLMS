@@ -1,0 +1,54 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}{{ subject.title }} - Topics{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}">
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div style="margin-bottom: 1rem;">
+        <a href="{% url 'courses:catalogue' %}"
+            style="display:inline-flex; align-items:center; gap:0.5rem; color:var(--text-secondary); text-decoration:none; font-size:0.875rem; transition:color 0.2s;">
+            <i class="fas fa-arrow-left"></i> Back to Courses
+        </a>
+    </div>
+    <h1 class="page-title">{{ subject.title }}</h1>
+    <p class="page-subtitle">{{ subject.course.title }}</p>
+</header>
+
+<div id="catalogue-content">
+    {% if not topics %}
+    <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-layer-group"></i></div>
+        <h3>No topics available</h3>
+        <p>There are no topics added to this subject yet.</p>
+    </div>
+    {% else %}
+    <div class="catalogue-grid">
+        {% for topic in topics %}
+        <div class="card animate-fade-in" onclick="window.location.href='{% url 'courses:topic_detail' topic.id %}'"
+            style="cursor: pointer;">
+            <div class="card-tag">Topic {{ topic.order }}</div>
+            <h3 class="card-title">{{ topic.title }}</h3>
+            <p class="card-desc">Explore lessons in this topic.</p>
+            <div class="card-footer">
+                <div class="card-meta">
+                    <span class="meta-item">
+                        <i class="fas fa-play-circle"></i> {{ topic.lessons.count }} Classes
+                    </span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap: 0.5rem; width:60%;">
+                    <a href="{% url 'courses:topic_detail' topic.id %}"
+                        style="display:block; text-align:center; background:var(--primary-light); color:var(--primary-color); padding:0.5rem; border-radius:6px; text-decoration:none; font-weight:500; transition:all 0.2s;">View
+                        Classes</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

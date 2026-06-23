@@ -1,0 +1,106 @@
+{% extends "teacher/base_teacher.html" %}
+{% load static %}
+
+{% block title %}Q&A Service{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem;">
+
+    <!-- Header -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h1 style="font-size:1.6rem; font-weight:700; color:var(--text-primary); margin:0 0 .3rem;">
+                <i class="ri-question-answer-line" style="color:#778873;"></i> Q&amp;A Service
+            </h1>
+            <p style="margin:0; color:var(--text-secondary); font-size:.9rem;">Review and reply to student questions.</p>
+        </div>
+    </div>
+
+    <!-- Filter bar -->
+    <form method="GET" action="{% url 'qa:teacher_qa_list' %}" style="display:flex; flex-wrap:wrap; gap:.75rem; margin-bottom:2rem; align-items:flex-end;">
+        <div>
+            <label style="display:block;font-size:.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:.3rem;text-transform:uppercase;">Course</label>
+            <select name="course_id" style="padding:.55rem .9rem; border:1.5px solid var(--border-color); border-radius:8px; min-width:180px; background:var(--card-bg); color:var(--text-primary);">
+                <option value="">All Courses</option>
+                {% for c in teacher_courses %}
+                <option value="{{ c.id }}" {% if selected_course_id == c.id %}selected{% endif %}>{{ c.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label style="display:block;font-size:.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:.3rem;text-transform:uppercase;">Status</label>
+            <select name="status" style="padding:.55rem .9rem; border:1.5px solid var(--border-color); border-radius:8px; min-width:150px; background:var(--card-bg); color:var(--text-primary);">
+                <option value="">All Statuses</option>
+                <option value="pending"     {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="ai_answered" {% if selected_status == 'ai_answered' %}selected{% endif %}>AI Answered</option>
+                <option value="answered"    {% if selected_status == 'answered' %}selected{% endif %}>Answered</option>
+            </select>
+        </div>
+        <button type="submit" style="padding:.6rem 1.2rem; background:#778873; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:.4rem;">
+            <i class="ri-filter-line"></i> Filter
+        </button>
+        {% if selected_course_id or selected_status %}
+        <a href="{% url 'qa:teacher_qa_list' %}" style="padding:.6rem 1rem; background:var(--bg-body); color:var(--text-secondary); border:1.5px solid var(--border-color); border-radius:8px; font-size:.85rem; font-weight:600; text-decoration:none;">
+            <i class="ri-close-line"></i> Clear
+        </a>
+        {% endif %}
+    </form>
+
+    <!-- Question count -->
+    <p style="font-size:.85rem; color:var(--text-secondary); margin-bottom:1rem;">
+        Showing <strong>{{ questions|length }}</strong> question{{ questions|length|pluralize }}
+    </p>
+
+    <!-- Questions -->
+    {% if questions %}
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+        {% for q in questions %}
+        <div class="form-card" style="border-left:4px solid {% if q.status == 'answered' %}#10b981{% elif q.status == 'ai_answered' %}#778873{% else %}#f59e0b{% endif %}; padding:1.25rem 1.5rem;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+                <div style="flex:1;">
+                    <!-- Meta row -->
+                    <div style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; font-size:.78rem; color:var(--text-secondary); margin-bottom:.6rem;">
+                        <span><i class="ri-user-line"></i> {{ q.user.get_full_name|default:q.user.username }}</span>
+                        <span>·</span>
+                        <span><i class="ri-book-open-line"></i> {{ q.course.title }}</span>
+                        {% if q.subject %}<span>·</span><span><i class="ri-layers-line"></i> {{ q.subject.title }}</span>{% endif %}
+                        <span>·</span>
+                        <span><i class="ri-time-line"></i> {{ q.created_at|date:"M d, Y H:i" }}</span>
+                        {% if q.answers.count %}<span>·</span><span><i class="ri-chat-1-line"></i> {{ q.answers.count }} answer{{ q.answers.count|pluralize }}</span>{% endif %}
+                    </div>
+                    <p style="margin:0 0 .6rem; font-size:.95rem; font-weight:500; color:var(--text-primary);">{{ q.content|truncatechars:220 }}</p>
+                    <!-- Media badges -->
+                    {% if q.image or q.pdf or q.audio %}
+                    <div style="display:flex; gap:.4rem; flex-wrap:wrap;">
+                        {% if q.image %}<span style="background:#e8f0e6; color:#3d5c38; padding:.18rem .6rem; border-radius:6px; font-size:.72rem; font-weight:700;"><i class="ri-image-line"></i> Image</span>{% endif %}
+                        {% if q.pdf   %}<span style="background:#fee2e2; color:#991b1b; padding:.18rem .6rem; border-radius:6px; font-size:.72rem; font-weight:700;"><i class="ri-file-pdf-line"></i> PDF</span>{% endif %}
+                        {% if q.audio %}<span style="background:#dcfce7; color:#166534; padding:.18rem .6rem; border-radius:6px; font-size:.72rem; font-weight:700;"><i class="ri-mic-line"></i> Audio</span>{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:.5rem;">
+                    <span style="display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .7rem;border-radius:999px;font-size:.7rem;font-weight:700;
+                        {% if q.status == 'pending' %}background:#fef9c3;color:#854d0e;
+                        {% elif q.status == 'ai_answered' %}background:#e8f0e6;color:#3d5c38;
+                        {% else %}background:#dcfce7;color:#166534;{% endif %}">
+                        {% if q.status == 'pending' %}<i class="ri-time-line"></i> Pending
+                        {% elif q.status == 'ai_answered' %}<i class="ri-robot-line"></i> AI Answered
+                        {% else %}<i class="ri-checkbox-circle-line"></i> Answered{% endif %}
+                    </span>
+                    <a href="{% url 'qa:qa_thread' q.pk %}" style="display:inline-flex;align-items:center;gap:.35rem;padding:.5rem 1rem;background:#778873;color:#fff;border-radius:8px;font-size:.82rem;font-weight:700;text-decoration:none;">
+                        <i class="ri-eye-line"></i> View &amp; Reply
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="form-card" style="text-align:center; padding:4rem 2rem; color:var(--text-secondary);">
+        <i class="ri-question-answer-line" style="font-size:3rem; color:#c7d2fe; display:block; margin-bottom:1rem;"></i>
+        <p style="font-size:1rem; margin:0;">No questions match your filters.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

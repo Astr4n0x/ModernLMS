@@ -1,0 +1,396 @@
+{% extends "teacher/base_teacher.html" %}
+{% load static %}
+
+{% block title %}Create Exam{% endblock %}
+
+{% block extra_css %}
+<style>
+    .exam-builder-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .exam-builder-header h1 { font-size: 2rem; }
+    .exam-builder-header p { color: var(--text-secondary); }
+
+    .question-counter {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #778873, #5f6e5c);
+        color: #fff;
+        padding: 0.6rem 1.25rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        box-shadow: 0 4px 14px rgba(99,102,241,0.3);
+        white-space: nowrap;
+    }
+    .question-counter i { font-size: 1.2rem; }
+    .question-counter #q-count { font-size: 1.4rem; }
+
+    .exam-meta-card {
+        background: var(--bg-surface);
+        padding: 2rem;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        margin-bottom: 2rem;
+    }
+
+    .questions-area {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .question-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        animation: fadeIn 0.25s ease forwards;
+    }
+
+    .question-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        background: var(--bg-body);
+        border-bottom: 1px solid var(--border-color);
+    }
+    .question-card-header .q-number {
+        font-weight: 700;
+        color: var(--primary-color);
+        font-size: 0.95rem;
+    }
+    .question-card-header .btn-remove-q {
+        background: none;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        font-size: 1.1rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.15s;
+    }
+    .question-card-header .btn-remove-q:hover {
+        background: rgba(239,68,68,0.1);
+        color: #ef4444;
+    }
+
+    .question-card-body { padding: 1.5rem; }
+
+    .question-card-body textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        font-size: 0.95rem;
+        resize: vertical;
+        min-height: 60px;
+        background: var(--bg-body);
+        color: var(--text-primary);
+    }
+
+    .options-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .option-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--bg-body);
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 0.5rem 0.75rem;
+        transition: border-color 0.15s;
+    }
+    .option-row.correct {
+        border-color: #10b981;
+        background: rgba(16,185,129,0.05);
+    }
+    .option-row input[type="radio"] {
+        width: auto;
+        accent-color: #10b981;
+        cursor: pointer;
+    }
+    .option-row input[type="text"] {
+        flex: 1;
+        border: none;
+        background: transparent;
+        font-size: 0.9rem;
+        padding: 0.4rem 0;
+        color: var(--text-primary);
+        outline: none;
+        box-shadow: none;
+    }
+    .option-row input[type="text"]:focus {
+        box-shadow: none;
+    }
+    .option-label {
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        min-width: 18px;
+    }
+
+    .btn-add-question {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 1rem;
+        border: 2px dashed var(--border-color);
+        border-radius: var(--radius-lg);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-add-question:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background: var(--primary-light);
+    }
+
+    .submit-bar {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    @media (max-width: 768px) {
+        .options-grid { grid-template-columns: 1fr; }
+        .exam-builder-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exam-builder-header">
+    <div>
+        <h1>Create New Exam</h1>
+        <p>Build an exam with multiple-choice questions.</p>
+    </div>
+    <div class="question-counter">
+        <i class="ri-questionnaire-line"></i>
+        Questions: <span id="q-count">0</span>
+    </div>
+</div>
+
+<!-- Exam Metadata -->
+<div class="exam-meta-card">
+    <div class="form-row">
+        <div class="form-group">
+            <label>Exam Title <span class="required">*</span></label>
+            <input type="text" id="exam-title" required placeholder="e.g. Midterm Physics">
+        </div>
+        <div class="form-group">
+            <label>Duration (minutes) <span class="required">*</span></label>
+            <input type="number" id="exam-duration" value="30" min="1">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Select Course <span class="required">*</span></label>
+            <div class="select-wrapper">
+                <select id="exam-course-select" required>
+                    <option value="" disabled selected>Choose a course</option>
+                    {% for c in courses %}
+                    <option value="{{ c.id }}">{{ c.title }}</option>
+                    {% endfor %}
+                </select>
+                <i class="ri-arrow-down-s-line select-icon"></i>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Select Subject</label>
+            <div class="select-wrapper">
+                <select id="exam-subject-select">
+                    <option value="" selected>None</option>
+                </select>
+                <i class="ri-arrow-down-s-line select-icon"></i>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Select Topic</label>
+            <div class="select-wrapper">
+                <select id="exam-topic-select">
+                    <option value="" selected>None</option>
+                </select>
+                <i class="ri-arrow-down-s-line select-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Questions -->
+<div class="questions-area" id="questions-container">
+    <!-- JS injects question cards here -->
+</div>
+
+<button type="button" class="btn-add-question" id="btn-add-question" style="margin-top: 1.25rem;">
+    <i class="ri-add-circle-line"></i> Add Question
+</button>
+
+<div class="submit-bar">
+    <a href="/teacher/?section=exams-module" class="btn-secondary"><i class="ri-arrow-left-line"></i> Cancel</a>
+    <button type="button" class="btn-primary" id="btn-submit-exam">
+        <i class="ri-check-double-line"></i> Create Exam
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const container = document.getElementById('questions-container');
+    const countEl = document.getElementById('q-count');
+    const OPTION_LABELS = ['A', 'B', 'C', 'D'];
+    let questionIndex = 0;
+
+    function updateCount() {
+        countEl.textContent = container.querySelectorAll('.question-card').length;
+    }
+
+    function renumber() {
+        container.querySelectorAll('.question-card').forEach((card, i) => {
+            card.querySelector('.q-number').textContent = `Question ${i + 1}`;
+        });
+        updateCount();
+    }
+
+    function addQuestion(prefill) {
+        questionIndex++;
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        const text = prefill ? prefill.text : '';
+        const opts = prefill ? prefill.options : ['', '', '', ''];
+        const correct = prefill ? prefill.correct_index : 0;
+        const qName = `q_${questionIndex}`;
+
+        let optionsHtml = '';
+        for (let i = 0; i < 4; i++) {
+            const isCorrect = (i === correct);
+            optionsHtml += `
+                <div class="option-row ${isCorrect ? 'correct' : ''}">
+                    <input type="radio" name="${qName}" value="${i}" ${isCorrect ? 'checked' : ''}>
+                    <span class="option-label">${OPTION_LABELS[i]}</span>
+                    <input type="text" placeholder="Option ${OPTION_LABELS[i]}" value="${opts[i] || ''}">
+                </div>`;
+        }
+
+        card.innerHTML = `
+            <div class="question-card-header">
+                <span class="q-number">Question ${container.children.length + 1}</span>
+                <button type="button" class="btn-remove-q" title="Remove question"><i class="ri-delete-bin-line"></i></button>
+            </div>
+            <div class="question-card-body">
+                <textarea placeholder="Enter your question here..." rows="2">${text}</textarea>
+                <div class="options-grid">${optionsHtml}</div>
+            </div>`;
+
+        // Remove button
+        card.querySelector('.btn-remove-q').addEventListener('click', () => {
+            card.remove();
+            renumber();
+        });
+
+        // Radio change - highlight correct option row
+        card.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                card.querySelectorAll('.option-row').forEach(r => r.classList.remove('correct'));
+                radio.closest('.option-row').classList.add('correct');
+            });
+        });
+
+        container.appendChild(card);
+        updateCount();
+        card.querySelector('textarea').focus();
+    }
+
+    document.getElementById('btn-add-question').addEventListener('click', () => addQuestion(null));
+
+    // Add first question by default
+    addQuestion(null);
+
+    // ── Submit ────────────────────────────────────────────────────────────────
+    document.getElementById('btn-submit-exam').addEventListener('click', () => {
+        const title = document.getElementById('exam-title').value.trim();
+        const courseId = $('#exam-course-select').val();
+        const subjectId = $('#exam-subject-select').val() || '';
+        const topicId = $('#exam-topic-select').val() || '';
+        const duration = document.getElementById('exam-duration').value;
+
+        if (!title) { alert('Exam title is required.'); return; }
+        if (!courseId) { alert('Please select a course.'); return; }
+
+        const questions = [];
+        let valid = true;
+        container.querySelectorAll('.question-card').forEach(card => {
+            const qText = card.querySelector('textarea').value.trim();
+            if (!qText) { valid = false; return; }
+            const opts = [];
+            card.querySelectorAll('.option-row input[type="text"]').forEach(inp => opts.push(inp.value.trim()));
+            const checked = card.querySelector('input[type="radio"]:checked');
+            const correctIdx = checked ? parseInt(checked.value) : 0;
+            questions.push({ text: qText, options: opts, correct_index: correctIdx });
+        });
+
+        if (!valid || questions.length === 0) {
+            alert('Please fill in all question texts. At least one question is required.');
+            return;
+        }
+
+        const btn = document.getElementById('btn-submit-exam');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ri-loader-4-line" style="animation:spin 1s linear infinite;"></i> Saving...';
+
+        fetch('{% url "teacher:create_exam" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: JSON.stringify({
+                title,
+                course_id: courseId,
+                subject_id: subjectId || null,
+                topic_id: topicId || null,
+                duration_minutes: parseInt(duration),
+                questions,
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                window.location.href = '/teacher/?section=exams-module';
+            } else {
+                alert('Error: ' + res.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ri-check-double-line"></i> Create Exam';
+            }
+        })
+        .catch(() => {
+            alert('Network error. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ri-check-double-line"></i> Create Exam';
+        });
+    });
+})();
+</script>
+{% endblock %}

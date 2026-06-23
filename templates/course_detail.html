@@ -1,0 +1,367 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}{{ course.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-hero {
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2rem;
+        align-items: center;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .detail-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: rgba(99, 102, 241, 0.2);
+        border-radius: 50%;
+    }
+
+    .detail-hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-level {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #A1BC98;
+        margin-bottom: 0.75rem;
+    }
+
+    .hero-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+        line-height: 1.3;
+        margin-bottom: 0.75rem;
+    }
+
+    .hero-instructor {
+        font-size: 0.95rem;
+        color: #c7d2fe;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .detail-thumb {
+        width: 220px;
+        height: 155px;
+        border-radius: 12px;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 3rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .detail-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .detail-body {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .detail-main {}
+
+    .section-block {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-block h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+
+    .section-block p {
+        color: var(--text-secondary);
+        line-height: 1.7;
+        font-size: 0.9rem;
+    }
+
+    .inclusions-list {
+        list-style: none;
+        padding: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
+    }
+
+    .inclusions-list li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .inclusions-list li::before {
+        content: '\f00c';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        color: #10b981;
+        flex-shrink: 0;
+    }
+
+    .subjects-list {}
+
+    .subject-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .subject-item:last-child {
+        border-bottom: none;
+    }
+
+    .subject-item i {
+        color: var(--primary-color);
+    }
+
+    /* Sticky Purchase Card */
+    .purchase-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.75rem;
+        position: sticky;
+        top: 100px;
+    }
+
+    .price-display {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .price-display span {
+        font-size: 1rem;
+        font-weight: 400;
+        color: var(--text-secondary);
+    }
+
+    .btn-enroll {
+        width: 100%;
+        background: linear-gradient(135deg, var(--primary-color), #A1BC98);
+        color: white;
+        border: none;
+        padding: 0.85rem 1.5rem;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 1rem;
+        transition: opacity 0.2s, transform 0.15s;
+        text-align: center;
+        display: block;
+        text-decoration: none;
+    }
+
+    .btn-enroll:hover {
+        opacity: 0.93;
+        transform: translateY(-1px);
+    }
+
+    .btn-enrolled {
+        width: 100%;
+        background: #d1fae5;
+        color: #065f46;
+        border: 2px solid #6ee7b7;
+        padding: 0.85rem 1.5rem;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 700;
+        text-align: center;
+        display: block;
+        text-decoration: none;
+        margin-top: 1rem;
+    }
+
+    .purchase-perks {
+        list-style: none;
+        padding: 0;
+        margin-top: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .purchase-perks li {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .purchase-perks li i {
+        color: var(--primary-color);
+    }
+
+    @media (max-width: 900px) {
+        .detail-body {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-hero {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-thumb {
+            width: 100%;
+            height: 180px;
+        }
+
+        .inclusions-list {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+{% for message in messages %}
+<div
+    style="margin-bottom:1rem;padding:0.75rem 1rem;border-radius:8px;{% if message.tags == 'error' %}background:#fee2e2;color:#991b1b;border:1px solid #fca5a5{% else %}background:#d1fae5;color:#065f46;border:1px solid #6ee7b7{% endif %}">
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Hero -->
+<div class="detail-hero">
+    <div class="detail-hero-content">
+        {% if course.class_level %}<div class="hero-level">{{ course.class_level.name }}</div>{% endif %}
+        <div class="hero-title">{{ course.title }}</div>
+        {% if course.instructors.all %}
+        <div class="hero-instructor">
+            <i class="fas fa-chalkboard-teacher"></i>
+            Instructors:
+            {% for inst in course.instructors.all %}
+            {{ inst.get_full_name|default:inst.username }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="detail-thumb">
+        {% if course.thumbnail %}
+        <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}">
+        {% else %}
+        <i class="fas fa-graduation-cap"></i>
+        {% endif %}
+    </div>
+</div>
+
+<div class="detail-body">
+    <!-- Left: Main info -->
+    <div class="detail-main">
+        <div class="section-block">
+            <h2>About This Course</h2>
+            <p>{{ course.description }}</p>
+        </div>
+
+        {% if inclusions %}
+        <div class="section-block">
+            <h2>What's Included</h2>
+            <ul class="inclusions-list">
+                {% for item in inclusions %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if course.subjects.all %}
+        <div class="section-block">
+            <h2>Course Curriculum</h2>
+            <div class="subjects-list">
+                {% for subject in course.subjects.all %}
+                <div class="subject-item">
+                    <i class="fas fa-book-open"></i>
+                    <span>{{ subject.title }}</span>
+                    <span style="margin-left:auto; font-size:0.8rem;">{{ subject.lessons.count }} Lessons</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right: Purchase card -->
+    <div>
+        <div class="purchase-card">
+            <div class="price-display">
+                {% if course.price == 0 %}
+                Free
+                {% else %}
+                ৳{{ course.price }} <span>BDT</span>
+                {% endif %}
+            </div>
+
+            {% if is_enrolled %}
+            <a href="{% url 'courses:catalogue' %}" class="btn-enrolled">
+                <i class="fas fa-check-circle"></i> Go to My Courses
+            </a>
+            {% else %}
+            <form method="POST" action="{% url 'courses:initiate_payment' course.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-enroll">
+                    {% if course.price == 0 %}
+                    <i class="fas fa-graduation-cap"></i> Enroll for Free
+                    {% else %}
+                    <i class="fas fa-lock"></i> Enroll Now – ৳{{ course.price }}
+                    {% endif %}
+                </button>
+            </form>
+            {% endif %}
+
+            <ul class="purchase-perks">
+                <li><i class="fas fa-video"></i> Full access to all lessons</li>
+                <li><i class="fas fa-infinity"></i> Lifetime access</li>
+                <li><i class="fas fa-file-download"></i> Downloadable resources</li>
+                <li><i class="fas fa-comments"></i> Live class commenting</li>
+                <li><i class="fas fa-certificate"></i> Course completion certificate</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

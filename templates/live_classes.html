@@ -1,0 +1,72 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Live Classes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}">
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <h1 class="page-title">Live Classes</h1>
+    <p class="page-subtitle">Join ongoing live classes from your enrolled courses.</p>
+</header>
+
+{% if lessons %}
+<section class="catalogue-grid" id="catalogue-grid">
+    {% for lesson in lessons %}
+    <div class="card lesson-card animate-fade-in" style="animation-delay: {{ forloop.counter0 }}0ms;"
+        onclick="window.location.href='{% url 'courses:node_detail' lesson.id %}'">
+        <div class="lesson-number">{{ lesson.order|stringformat:"02d" }}</div>
+        <div class="card-tag">{{ lesson.course.title }} - {{ lesson.parent.title|default:"Root" }}</div>
+        <h3 class="card-title">{{ lesson.title }}</h3>
+        <div class="card-subtitle">
+            <i class="fas fa-user-tie"></i> 
+            {% for inst in lesson.course.instructors.all %}
+                {{ inst.get_full_name|default:inst.username }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+                Instructor
+            {% endfor %}
+        </div>
+        <p class="card-desc">{{ lesson.description|default:"Click to join this live lesson." }}</p>
+        <div class="card-footer">
+            <div class="card-meta">
+                <span class="meta-item" style="color: #ef4444; font-weight: 600;">
+                    <i class="fas fa-video pulse" style="animation: pulse 2s infinite;"></i> Live Now
+                </span>
+            </div>
+            <div class="card-action">
+                <i class="fas fa-play"></i> Join
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</section>
+
+<style>
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        50% {
+            transform: scale(1.2);
+            opacity: 0.7;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon"><i class="fas fa-broadcast-tower"></i></div>
+    <h3>No live classes right now</h3>
+    <p>Check back later when an instructor starts a live session.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,325 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Past Exams{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}">
+<link rel="stylesheet" href="{% static 'css/exam.css' %}">
+<style>
+    .filter-section {
+        display: flex;
+        gap: 1.5rem;
+        background: var(--bg-surface);
+        padding: 1.5rem;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        animation: fadeIn 0.3s ease forwards;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .filter-select {
+        width: 100%;
+        appearance: none;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 0.75rem 1rem;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        font-family: inherit;
+        cursor: pointer;
+        transition: border-color 0.18s;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .exam-duration-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.625rem;
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--primary-color);
+        border-radius: 999px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+    }
+
+    /* Tab Switcher */
+    .exam-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .exam-tab-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: var(--bg-surface);
+        border: 1.5px solid var(--border-color);
+        border-radius: var(--radius-md);
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+    .exam-tab-btn.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: #fff;
+    }
+
+    .exam-tab-btn:hover:not(.active) {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <h1 class="page-title">Past Exams</h1>
+    <p class="page-subtitle">Browse and attempt exams from your enrolled courses.</p>
+</header>
+
+<!-- Tab Switcher -->
+<div class="exam-tabs" id="exam-tabs">
+    <button class="exam-tab-btn active" id="tab-exams" onclick="switchTab('exams')">
+        <i class="fas fa-clipboard-list"></i> Available Exams
+    </button>
+    <button class="exam-tab-btn" id="tab-history" onclick="switchTab('history')">
+        <i class="fas fa-history"></i> My Attempts
+    </button>
+</div>
+
+<!-- Exams Tab -->
+<div id="exams-tab-content">
+    <!-- Filter Section -->
+    <div id="exam-filters"></div>
+
+    <!-- Exam Grid -->
+    <div id="exam-grid-container"></div>
+</div>
+
+<!-- History Tab -->
+<div id="history-tab-content" style="display:none;">
+    <div id="attempt-history-container"></div>
+</div>
+
+<!-- Data -->
+{{ exam_data_json|json_script:"exam-data" }}
+{{ courses_filter_json|json_script:"courses-filter-data" }}
+{{ attempts_data_json|json_script:"attempts-data" }}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const examData = JSON.parse(document.getElementById('exam-data').textContent || '[]');
+        const coursesFilter = JSON.parse(document.getElementById('courses-filter-data').textContent || '[]');
+        const attemptsData = JSON.parse(document.getElementById('attempts-data').textContent || '[]');
+        const filtersEl = document.getElementById('exam-filters');
+        const gridEl = document.getElementById('exam-grid-container');
+        const historyEl = document.getElementById('attempt-history-container');
+
+        /* ── Tab Switching ─────────────────────────────── */
+        window.switchTab = function (tab) {
+            const examsContent = document.getElementById('exams-tab-content');
+            const historyContent = document.getElementById('history-tab-content');
+            const tabExams = document.getElementById('tab-exams');
+            const tabHistory = document.getElementById('tab-history');
+
+            if (tab === 'exams') {
+                examsContent.style.display = '';
+                historyContent.style.display = 'none';
+                tabExams.classList.add('active');
+                tabHistory.classList.remove('active');
+            } else {
+                examsContent.style.display = 'none';
+                historyContent.style.display = '';
+                tabExams.classList.remove('active');
+                tabHistory.classList.add('active');
+            }
+        };
+
+        /* ── Available Exams ───────────────────────────── */
+        if (examData.length === 0) {
+            gridEl.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-clipboard-list"></i></div>
+            <h3>No exams available yet</h3>
+            <p>Exams will appear here once your instructor publishes them.</p>
+        </div>`;
+        } else {
+            // Render Filters
+            filtersEl.innerHTML = `
+        <div class="filter-section animate-fade-in">
+            <div class="filter-group">
+                <label for="exam-course-filter">Course</label>
+                <select id="exam-course-filter" class="filter-select">
+                    <option value="all">All Courses</option>
+                    ${coursesFilter.map(c => `<option value="${c.id}">${c.title}</option>`).join('')}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="exam-subject-filter">Subject</label>
+                <select id="exam-subject-filter" class="filter-select">
+                    <option value="all">All Subjects</option>
+                </select>
+            </div>
+        </div>`;
+
+            const courseFilter = document.getElementById('exam-course-filter');
+            const subjectFilter = document.getElementById('exam-subject-filter');
+
+            function updateSubjects() {
+                const selCourse = courseFilter.value;
+                let subjects = [];
+                if (selCourse === 'all') {
+                    const seen = new Set();
+                    coursesFilter.forEach(c => c.subjects.forEach(s => {
+                        if (!seen.has(s.id)) { seen.add(s.id); subjects.push(s); }
+                    }));
+                } else {
+                    const course = coursesFilter.find(c => String(c.id) === selCourse);
+                    if (course) subjects = course.subjects;
+                }
+                subjectFilter.innerHTML = `<option value="all">All Subjects</option>` +
+                    subjects.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+            }
+
+            function renderGrid() {
+                const selCourse = courseFilter.value;
+                const selSubject = subjectFilter.value;
+
+                let filtered = examData;
+                if (selCourse !== 'all') filtered = filtered.filter(e => String(e.course_id) === selCourse);
+                if (selSubject !== 'all') filtered = filtered.filter(e => String(e.subject_id) === selSubject);
+
+                if (filtered.length === 0) {
+                    gridEl.innerHTML = `<p style="color:var(--text-secondary);padding:2rem 0;">No exams found for selected filters.</p>`;
+                    return;
+                }
+
+                let html = '<div class="catalogue-grid">';
+                filtered.forEach((exam, idx) => {
+                    const delay = idx * 60;
+                    const subjectTag = exam.subject_title
+                        ? `<div class="card-tag">${exam.course_title} - ${exam.subject_title}</div>`
+                        : `<div class="card-tag">${exam.course_title}</div>`;
+                    html += `
+                <div class="card animate-fade-in" style="animation-delay:${delay}ms;cursor:pointer;"
+                     id="exam-card-${exam.id}"
+                     onclick="window.location.href='/exam/${exam.id}/'">
+                    ${subjectTag}
+                    <h3 class="card-title">${exam.title}</h3>
+                    <p class="card-desc" style="color:var(--text-secondary);flex-grow:1;">
+                        <i class="fas fa-question-circle" style="color:var(--primary-color);margin-right:0.25rem;"></i>
+                        ${exam.total_questions} Question${exam.total_questions !== 1 ? 's' : ''}
+                    </p>
+                    <div class="card-footer">
+                        <div class="card-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-clock"></i>
+                                ${exam.duration_minutes} min
+                            </span>
+                        </div>
+                        <div class="card-action">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>`;
+                });
+                html += '</div>';
+                gridEl.innerHTML = html;
+            }
+
+            courseFilter.addEventListener('change', () => { updateSubjects(); renderGrid(); });
+            subjectFilter.addEventListener('change', renderGrid);
+            updateSubjects();
+            renderGrid();
+        }
+
+        /* ── Attempt History ───────────────────────────── */
+        function renderHistory() {
+            if (attemptsData.length === 0) {
+                historyEl.innerHTML = `
+            <div class="attempt-history-section">
+                <div class="attempt-history-header">
+                    <i class="fas fa-history"></i>
+                    <h2>My Attempt History</h2>
+                </div>
+                <div class="attempt-empty">
+                    <i class="fas fa-inbox" style="font-size:2rem;color:var(--text-tertiary);display:block;margin-bottom:0.75rem;"></i>
+                    No exam attempts yet. Take an exam to see your history here.
+                </div>
+            </div>`;
+                return;
+            }
+
+            let html = `
+        <div class="attempt-history-section">
+            <div class="attempt-history-header">
+                <i class="fas fa-history"></i>
+                <h2>My Attempt History</h2>
+            </div>
+            <div class="attempt-history-list">`;
+
+            attemptsData.forEach((att, idx) => {
+                const delay = idx * 60;
+                const pct = att.total_questions > 0 ? Math.round((att.score / att.total_questions) * 100) : 0;
+                html += `
+            <div class="attempt-card animate-fade-in" style="animation-delay:${delay}ms;">
+                <div class="attempt-card-info">
+                    <div class="attempt-card-title">${att.exam_title}</div>
+                    <div class="attempt-card-meta">
+                        <span><i class="fas fa-book"></i> ${att.course_title}</span>
+                        <span><i class="fas fa-calendar-alt"></i> ${att.submitted_at}</span>
+                        <span><i class="fas fa-check-circle"></i> ${att.correct_answers} correct</span>
+                        <span><i class="fas fa-times-circle"></i> ${att.wrong_answers} wrong</span>
+                    </div>
+                </div>
+                <div class="attempt-card-score">
+                    <span class="attempt-card-score-num">${att.score}</span>
+                    <span class="attempt-card-score-den">/${att.total_questions}</span>
+                </div>
+                <div class="attempt-card-action">
+                    <a href="${att.review_url}" class="btn-review-attempt">
+                        <i class="fas fa-eye"></i> Review
+                    </a>
+                </div>
+            </div>`;
+            });
+
+            html += `</div></div>`;
+            historyEl.innerHTML = html;
+        }
+
+        renderHistory();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,420 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}My Streak & Badges{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Streak Profile Page ───────────────────────── */
+    .streak-hero {
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%);
+        border-radius: 20px;
+        padding: 2.5rem 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        gap: 2.5rem;
+        box-shadow: 0 20px 60px rgba(79, 70, 229, 0.35);
+    }
+
+    .streak-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+        pointer-events: none;
+    }
+
+    .streak-hero-flame {
+        font-size: 5rem;
+        line-height: 1;
+        filter: drop-shadow(0 0 20px rgba(249, 115, 22, 0.6));
+        animation: flamePulse 2s ease-in-out infinite;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    @keyframes flamePulse {
+
+        0%,
+        100% {
+            transform: scale(1) rotate(-2deg);
+        }
+
+        50% {
+            transform: scale(1.08) rotate(2deg);
+        }
+    }
+
+    .streak-hero-info {
+        position: relative;
+        z-index: 1;
+    }
+
+    .streak-hero-info h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        color: #f97316;
+        margin: 0;
+        line-height: 1;
+        text-shadow: 0 0 30px rgba(249, 115, 22, 0.5);
+    }
+
+    .streak-hero-info .streak-hero-label {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 4px;
+        letter-spacing: 0.04em;
+    }
+
+    .streak-hero-stats {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .streak-hero-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .streak-hero-stat .val {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .streak-hero-stat .lbl {
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.55);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    /* Next Badge Progress */
+    .next-badge-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .next-badge-emoji {
+        font-size: 2.5rem;
+        flex-shrink: 0;
+        animation: spinGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes spinGlow {
+
+        0%,
+        100% {
+            filter: drop-shadow(0 0 6px rgba(249, 115, 22, 0.3));
+        }
+
+        50% {
+            filter: drop-shadow(0 0 14px rgba(249, 115, 22, 0.7));
+        }
+    }
+
+    .next-badge-info {
+        flex: 1;
+    }
+
+    .next-badge-info h4 {
+        margin: 0 0 4px;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+
+    .next-badge-info p {
+        margin: 0 0 10px;
+        font-size: 0.84rem;
+        color: var(--text-secondary);
+    }
+
+    .nbp-bar {
+        background: var(--border-color);
+        border-radius: 999px;
+        height: 10px;
+        overflow: hidden;
+    }
+
+    .nbp-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #f97316, #fb923c);
+        border-radius: 999px;
+        transition: width 1s ease;
+    }
+
+    /* Badges Grid */
+    .badges-section-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .badges-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .badge-card {
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.4rem 1rem;
+        text-align: center;
+        position: relative;
+        transition: all 0.25s ease;
+        overflow: hidden;
+    }
+
+    .badge-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, transparent 60%, rgba(249, 115, 22, 0.05));
+        pointer-events: none;
+    }
+
+    .badge-card.earned {
+        border-color: #f97316;
+        background: linear-gradient(135deg, var(--bg-card), rgba(249, 115, 22, 0.06));
+        box-shadow: 0 4px 20px rgba(249, 115, 22, 0.15);
+    }
+
+    .badge-card.earned:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 30px rgba(249, 115, 22, 0.25);
+    }
+
+    .badge-card.locked {
+        opacity: 0.55;
+        filter: grayscale(0.3);
+    }
+
+    .badge-card.locked:hover {
+        opacity: 0.75;
+        transform: translateY(-2px);
+    }
+
+    .badge-card-emoji {
+        font-size: 2.6rem;
+        display: block;
+        margin-bottom: 0.6rem;
+        line-height: 1;
+    }
+
+    .badge-card.locked .badge-card-emoji {
+        filter: grayscale(1);
+        opacity: 0.4;
+    }
+
+    .badge-card-name {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.3rem;
+    }
+
+    .badge-card-days {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .badge-earned-ribbon {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #f97316;
+        color: #fff;
+        font-size: 0.6rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 0 14px 0 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .badge-lock-icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        opacity: 0.6;
+    }
+
+    .badge-progress-mini {
+        margin-top: 0.5rem;
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .badge-progress-mini-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #f97316, #fb923c);
+        border-radius: 999px;
+    }
+
+    .badge-card.earned .badge-progress-mini {
+        display: none;
+    }
+
+    /* Tips card */
+    .streak-tips-card {
+        background: linear-gradient(135deg, var(--bg-card), rgba(79, 70, 229, 0.05));
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .streak-tips-card h4 {
+        margin: 0 0 1rem;
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    .tip-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+    }
+
+    .tip-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .tip-icon {
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<div class="streak-hero">
+    <div class="streak-hero-flame">🔥</div>
+    <div class="streak-hero-info">
+        <h1>{{ current_streak }}</h1>
+        <div class="streak-hero-label">Day Streak - Keep it going!</div>
+        <div class="streak-hero-stats">
+            <div class="streak-hero-stat">
+                <span class="val">{{ longest_streak }}</span>
+                <span class="lbl">Best Ever</span>
+            </div>
+            <div class="streak-hero-stat">
+                <span class="val">{{ earned_badges|length }}</span>
+                <span class="lbl">Badges Earned</span>
+            </div>
+            <div class="streak-hero-stat">
+                <span class="val">{{ milestones|length }}</span>
+                <span class="lbl">Total Milestones</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Next Badge Progress -->
+{% if next_badge %}
+{% with pct=streak_count|floatformat:0 %}
+<div class="next-badge-card">
+    <div class="next-badge-emoji">{{ next_badge.name|slice:":2" }}</div>
+    <div class="next-badge-info">
+        <h4>Next Badge: {{ next_badge.name|slice:"2:" }}</h4>
+        <p>
+            {{ next_badge.remaining }} more day{{ next_badge.remaining|pluralize }} to unlock this badge
+            (requires {{ next_badge.days }}-day streak)
+        </p>
+        <div class="nbp-bar">
+            <div class="nbp-fill" style="width: {% widthratio current_streak next_badge.days 100 %}%;"></div>
+        </div>
+    </div>
+    <div style="text-align:center; flex-shrink:0;">
+        <div style="font-size:1.5rem; font-weight:800; color: #f97316;">
+            {% widthratio current_streak next_badge.days 100 %}%
+        </div>
+        <div style="font-size:0.72rem; color: var(--text-secondary);">progress</div>
+    </div>
+</div>
+{% endwith %}
+{% else %}
+<div class="next-badge-card" style="background: linear-gradient(135deg, rgba(249,115,22,0.08), rgba(251,146,60,0.05));">
+    <div class="next-badge-emoji">🌠</div>
+    <div class="next-badge-info">
+        <h4>You've unlocked ALL badges!</h4>
+        <p>Incredible achievement - you are a true <strong>Immortal Scholar</strong>. 🎉</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tips Card -->
+<div class="streak-tips-card">
+    <h4>💡 How to Maintain Your Streak</h4>
+    <div class="tip-item"><span class="tip-icon">📖</span><span>Open and watch any <strong>lesson</strong> in your
+            enrolled courses each day.</span></div>
+    <div class="tip-item"><span class="tip-icon">📝</span><span>Submit any <strong>exam</strong> to count as your daily
+            activity.</span></div>
+    <div class="tip-item"><span class="tip-icon">⚠️</span><span>Missing a day <strong>resets</strong> your current
+            streak, but your earned badges are yours forever!</span></div>
+    <div class="tip-item"><span class="tip-icon">🏆</span><span>Your <strong>longest streak</strong> determines which
+            badges you keep permanently.</span></div>
+</div>
+
+<!-- All Milestones Grid -->
+<div class="badges-section-title">
+    <i class="fas fa-medal" style="color: #f97316;"></i>
+    All Milestone Badges
+    <span style="font-size:0.78rem; font-weight:500; color: var(--text-secondary); margin-left:0.5rem;">({{
+        earned_badges|length }}/{{ milestones|length }} earned)</span>
+</div>
+
+<div class="badges-grid">
+    {% for m in milestones %}
+    <div class="badge-card {% if m.earned %}earned{% else %}locked{% endif %}">
+        {% if m.earned %}
+        <div class="badge-earned-ribbon">✓ Earned</div>
+        {% else %}
+        <i class="fas fa-lock badge-lock-icon"></i>
+        {% endif %}
+        <span class="badge-card-emoji">{{ m.name|slice:":2" }}</span>
+        <div class="badge-card-name">{{ m.name|slice:"2:" }}</div>
+        <div class="badge-card-days">{{ m.days }} Day Streak</div>
+        {% if not m.earned %}
+        <div class="badge-progress-mini">
+            <div class="badge-progress-mini-fill" style="width: {{ m.progress_pct }}%;"></div>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

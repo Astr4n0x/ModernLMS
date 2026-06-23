@@ -1,0 +1,245 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page_title|default:"ModernLMS" }}{% endblock %} | ModernLMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/student.css' %}?v=2">
+    {% block extra_css %}{% endblock %}
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <script>
+                // Instantly apply collapsed state to prevent flickering
+                if (localStorage.getItem('sidebarState') === 'collapsed') {
+                    document.getElementById('sidebar').classList.add('collapsed');
+                }
+            </script>
+            <div class="sidebar-header">
+                <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
+                <span class="brand-text">ModernLMS</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <a href="{% url 'courses:dashboard' %}" class="nav-link" data-tooltip="Dashboard"
+                            aria-label="Dashboard">
+                            <i class="fas fa-home nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'catalogue' %}active{% endif %}">
+                        <a href="{% url 'courses:catalogue' %}" class="nav-link" data-tooltip="My Courses"
+                            aria-label="My Courses">
+                            <i class="fas fa-book nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">My Courses</span>
+                        </a>
+                    </li>
+                    <li
+                        class="nav-item {% if request.resolver_match.url_name == 'course_store' or request.resolver_match.url_name == 'course_detail' %}active{% endif %}">
+                        <a href="{% url 'courses:course_store' %}" class="nav-link" data-tooltip="All Courses"
+                            aria-label="All Courses">
+                            <i class="fas fa-store nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">All Courses</span>
+                        </a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'live_classes' %}active{% endif %}">
+                        <a href="{% url 'courses:live_classes' %}" class="nav-link" data-tooltip="Live Classes"
+                            aria-label="Live Classes">
+                            <i class="fas fa-broadcast-tower nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">Live Classes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'past_classes' %}active{% endif %}">
+                        <a href="{% url 'courses:past_classes' %}" class="nav-link" data-tooltip="Past Classes"
+                            aria-label="Past Classes">
+                            <i class="fas fa-calendar-alt nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">Past Classes</span>
+                        </a>
+                    </li>
+                    <li
+                        class="nav-item {% if request.resolver_match.url_name == 'past_exams' or request.resolver_match.url_name == 'exam_detail' or request.resolver_match.url_name == 'exam_submit' %}active{% endif %}">
+                        <a href="{% url 'courses:past_exams' %}" class="nav-link" data-tooltip="Past Exams"
+                            aria-label="Past Exams">
+                            <i class="fas fa-clipboard-list nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">Past Exams</span>
+                        </a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'solve_sheets' %}active{% endif %}">
+                        <a href="{% url 'courses:solve_sheets' %}" class="nav-link" data-tooltip="Solve Sheets"
+                            aria-label="Solve Sheets">
+                            <i class="fas fa-file-alt nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">Solve Sheets</span>
+                        </a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'board_questions' or request.resolver_match.url_name == 'board_question_detail' %}active{% endif %}">
+                        <a href="{% url 'courses:board_questions' %}" class="nav-link" data-tooltip="Board Questions"
+                            aria-label="Board Questions">
+                            <i class="fas fa-graduation-cap nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">Board Questions</span>
+                        </a>
+                    </li>
+                    <li class="nav-item {% if request.resolver_match.url_name == 'scholarships' %}active{% endif %}">
+                        <a href="{% url 'courses:scholarships' %}" class="nav-link" data-tooltip="Scholarships"
+                            aria-label="Scholarships & Admissions">
+                            <i class="fas fa-award nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">Scholarships</span>
+                        </a>
+                    </li>
+                    <li
+                        class="nav-item {% if request.resolver_match.url_name == 'qa_list' or request.resolver_match.url_name == 'qa_ask' or request.resolver_match.url_name == 'qa_thread' or request.resolver_match.url_name == 'qa_choice' %}active{% endif %}">
+                        <a href="{% url 'qa:qa_list' %}" class="nav-link" data-tooltip="Q&A Service"
+                            aria-label="Q&A Service">
+                            <i class="fas fa-question-circle nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">Q&A Service</span>
+                        </a>
+                    </li>
+                    <li class="nav-item {% if 'discussion' in request.resolver_match.url_name %}active{% endif %}">
+                        <a href="{% url 'discussion:discussion_list' %}" class="nav-link"
+                            data-tooltip="Discussion Group" aria-label="Discussion Group">
+                            <i class="fas fa-comments nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">Discussion Group</span>
+                        </a>
+                    </li>
+                    <li
+                        class="nav-item {% if 'academic_results' in request.resolver_match.url_name %}active{% endif %}">
+                        <a href="{% url 'courses:academic_results' %}" class="nav-link" data-tooltip="Academic Results"
+                            aria-label="Academic Results">
+                            <i class="fas fa-trophy nav-icon" aria-hidden="true"></i>
+                            <span class="nav-text">Academic Results</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="toggle-btn" id="theme-toggle" aria-label="Toggle Theme" title="Toggle Theme">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <button class="toggle-btn" id="sidebar-toggle" aria-label="Toggle Sidebar">
+                    <i class="fas fa-chevron-left" id="toggle-icon"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- Main Content Wrapper -->
+        <main class="main-content">
+            <header class="top-navbar">
+                <div class="top-nav-content">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open Menu">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h2>{% block page_heading %}{{ page_title|default:"Dashboard" }}{% endblock %}</h2>
+                    </div>
+                    <div style="position: relative; display: flex; align-items: center; gap: 1rem;">
+                        <span class="top-nav-username">{{ user.get_full_name|default:user.username }}</span>
+                        <!-- Streak Counter -->
+                        <a href="{% url 'courses:streak_profile' %}" class="streak-counter-badge"
+                            title="Your Learning Streak" aria-label="Streak: {{ streak_count }} days">
+                            <span class="streak-fire">🔥</span>
+                            <span class="streak-num">{{ streak_count }}</span>
+                        </a>
+                        <!-- Notification / Profile wrapper -->
+                        <div class="profile-menu-wrapper" style="position: relative;">
+                            <img src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=778873&color=fff"
+                                alt="User Profile" class="avatar profile-avatar-btn" id="profilePopupBtn"
+                                style="cursor: pointer;">
+
+                            <!-- Dropdown Popup -->
+                            <div class="profile-dropdown-popup" id="profileDropdown"
+                                style="display: none; position: absolute; top: calc(100% + 10px); right: 0; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: var(--shadow-md); width: 220px; z-index: 1000; overflow: hidden; animation: slideDown 0.2s ease;">
+                                <div
+                                    style="padding: 1rem; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
+                                    <h4 style="margin: 0; font-size: 1rem; color: var(--text-primary);">{{ user.get_full_name|default:user.username }}</h4>
+                                    <p
+                                        style="margin: 0; font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+                                        User ID: {{ user.user_id }}</p>
+                                    <!-- Streak in Dropdown -->
+                                    <div
+                                        style="margin-top: 8px; display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
+                                        <span style="font-size: 1rem;">🔥</span>
+                                        <span style="color: #f97316; font-weight: 700;">{{ streak_count }} day
+                                            streak</span>
+                                    </div>
+                                </div>
+                                <div style="padding: 0.5rem 0;">
+                                    <a href="{% url 'accounts:edit_profile' %}"
+                                        style="display: block; padding: 0.5rem 1rem; color: var(--text-primary); text-decoration: none; font-size: 0.9rem; transition: background 0.2s;"
+                                        onmouseover="this.style.background='var(--primary-light)'"
+                                        onmouseout="this.style.background='transparent'">
+                                        <i class="fas fa-user-edit"
+                                            style="width: 20px; margin-right: 8px; color: var(--text-secondary);"></i>
+                                        Edit Profile
+                                    </a>
+                                    <a href="{% url 'courses:streak_profile' %}"
+                                        style="display: block; padding: 0.5rem 1rem; color: var(--text-primary); text-decoration: none; font-size: 0.9rem; transition: background 0.2s;"
+                                        onmouseover="this.style.background='var(--primary-light)'"
+                                        onmouseout="this.style.background='transparent'">
+                                        <i class="fas fa-fire"
+                                            style="width: 20px; margin-right: 8px; color: #f97316;"></i> My Streak &
+                                        Badges
+                                    </a>
+                                </div>
+                                <div style="border-top: 1px solid var(--border-color); padding: 0.5rem 0;">
+                                    <form method="POST" action="{% url 'accounts:logout' %}" style="margin:0;">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                            style="width: 100%; text-align: left; background: none; border: none; padding: 0.5rem 1rem; color: #ef4444; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: background 0.2s;"
+                                            class="dropdown-logout-btn">
+                                            <i class="fas fa-sign-out-alt" style="width: 20px; margin-right: 8px;"></i>
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/sidebar.js' %}?v=2"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const popupBtn = document.getElementById('profilePopupBtn');
+            const dropdown = document.getElementById('profileDropdown');
+            if (popupBtn && dropdown) {
+                popupBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target) && e.target !== popupBtn) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

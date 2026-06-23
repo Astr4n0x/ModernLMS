@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Teacher Panel{% endblock %} | ModernLMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/teacher.css' %}?v=3">
+    {% block extra_css %}{% endblock %}
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>LMS Teacher</h2>
+                <button class="btn-icon sidebar-collapse-btn" id="sidebar-collapse-btn" title="Toggle Sidebar">
+                    <i class="ri-skip-back-line"></i>
+                </button>
+            </div>
+
+            <div class="user-profile">
+                <div class="avatar"><i class="ri-user-star-line"></i></div>
+                <div class="user-info">
+                    <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+                    <span class="user-role">Teacher</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/teacher/?section=content-builder-module" class="nav-item {% if active_section == 'content-builder-module' %}active{% endif %}">
+                    <i class="ri-node-tree"></i><span>Content Builder</span>
+                </a>
+                <a href="/teacher/?section=live-module" class="nav-item {% if active_section == 'live-module' %}active{% endif %}">
+                    <i class="ri-live-line"></i><span>Live Classes</span>
+                </a>
+                <a href="/teacher/?section=manage-module" class="nav-item {% if active_section == 'manage-module' %}active{% endif %}">
+                    <i class="ri-folders-line"></i><span>Manage Lessons</span>
+                </a>
+                <a href="/teacher/?section=exams-module" class="nav-item {% if active_section == 'exams-module' %}active{% endif %}">
+                    <i class="ri-task-line"></i><span>Manage Exams</span>
+                </a>
+                <a href="{% url 'teacher:solve_sheets' %}" class="nav-item {% if active_section == 'solve-sheets-module' %}active{% endif %}">
+                    <i class="ri-file-paper-2-line"></i><span>Solve Sheets</span>
+                </a>
+                <a href="{% url 'teacher:board_questions' %}" class="nav-item {% if active_section == 'board-questions-module' %}active{% endif %}">
+                    <i class="ri-article-line"></i><span>Board Questions</span>
+                </a>
+                <a href="/teacher/?section=attachment-module" class="nav-item {% if active_section == 'attachment-module' %}active{% endif %}">
+                    <i class="ri-attachment-line"></i><span>Attachments</span>
+                </a>
+                <a href="{% url 'qa:teacher_qa_list' %}" class="nav-item {% if active_section == 'qa-module' %}active{% endif %}">
+                    <i class="ri-question-answer-line"></i><span>Q&amp;A Service</span>
+                </a>
+                <a href="{% url 'discussion:discussion_list' %}" class="nav-item {% if 'discussion' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="ri-discuss-line"></i><span>Discussion Groups</span>
+                </a>
+
+                {% if request.user.is_super_teacher %}
+                <div style="margin: 1rem 0 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600;">Super Admin</div>
+                <a href="/teacher/?section=publish-course-module" class="nav-item {% if active_section == 'publish-course-module' %}active{% endif %}">
+                    <i class="ri-store-2-line"></i><span>Publish Course</span>
+                </a>
+                <a href="/teacher/?section=combo-course-module" class="nav-item {% if active_section == 'combo-course-module' %}active{% endif %}">
+                    <i class="ri-stack-line"></i><span>Combo Course</span>
+                </a>
+                <a href="/teacher/?section=students-module" class="nav-item {% if active_section == 'students-module' %}active{% endif %}">
+                    <i class="ri-team-line"></i><span>Manage Students</span>
+                </a>
+                <a href="/teacher/?section=analytics-module" class="nav-item {% if active_section == 'analytics-module' %}active{% endif %}">
+                    <i class="ri-bar-chart-box-line"></i><span>Course Analytics</span>
+                </a>
+                <a href="/teacher/?section=teachers-module" class="nav-item {% if active_section == 'teachers-module' %}active{% endif %}">
+                    <i class="ri-user-star-line"></i><span>Manage Teachers</span>
+                </a>
+                {% endif %}
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="theme-toggle" class="nav-item text-secondary theme-toggle-btn" style="width:100%; text-align:left; background:none; border:none; cursor:pointer; margin-bottom: 0.5rem; color: var(--text-tertiary); display: flex; align-items: center; gap: 1rem; padding: 0.875rem 1.5rem; font-weight: 500; transition: var(--transition-fast);">
+                    <i class="ri-moon-line" id="theme-icon" style="font-size: 1.25rem; min-width: 1.25rem;"></i><span>Toggle Theme</span>
+                </button>
+                <form method="POST" action="{% url 'accounts:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-item text-danger" style="width:100%; text-align:left; background:none; border:none; cursor:pointer;">
+                        <i class="ri-logout-box-r-line"></i><span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="mobile-header">
+                <h2>LMS Teacher Admin</h2>
+                <button class="menu-toggle" id="menu-toggle"><i class="ri-menu-line"></i></button>
+            </header>
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <div id="toast" class="toast hidden">
+        <i class="ri-checkbox-circle-fill"></i>
+        <span id="toast-msg">Action completed.</span>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('select').select2({ width: '100%' });
+        });
+    </script>
+    <script src="{% static 'js/teacher.js' %}?v=3"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

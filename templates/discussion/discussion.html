@@ -1,0 +1,954 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.title }} - Discussion Group</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.css" rel="stylesheet">
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    <style>
+        /* ═══════════════════════════════════════════════
+           WhatsApp-Style Discussion Chat - Clean Redesign
+           ═══════════════════════════════════════════════ */
+
+        /* ── Theme Tokens ───────────────────────────── */
+        :root {
+            --chat-bg: #EFEAE2;
+            --chat-pattern-opacity: 0.04;
+            --header-bg: #FFFFFF;
+            --header-border: #E8E8E8;
+            --bubble-mine: #D9FDD3;
+            --bubble-theirs: #FFFFFF;
+            --bubble-mine-border: #C4EDBE;
+            --bubble-theirs-border: #E8E8E8;
+            --text-primary: #111B21;
+            --text-secondary: #667781;
+            --text-muted: #8696A0;
+            --input-bg: #FFFFFF;
+            --input-border: #E0E0E0;
+            --footer-bg: #F0F2F5;
+            --icon-color: #54656F;
+            --accent: #00A884;
+            --accent-hover: #008F72;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-bubble: 0 1px 0.5px rgba(11,20,26,0.08);
+            --img-bg: rgba(0,0,0,0.06);
+            --file-bg: rgba(0,0,0,0.04);
+            --scrollbar-thumb: rgba(0,0,0,0.18);
+        }
+
+        [data-theme="dark"] {
+            --chat-bg: #0B141A;
+            --chat-pattern-opacity: 0.015;
+            --header-bg: #1F2C33;
+            --header-border: #2A3942;
+            --bubble-mine: #005C4B;
+            --bubble-theirs: #202C33;
+            --bubble-mine-border: #00503F;
+            --bubble-theirs-border: #2A3942;
+            --text-primary: #E9EDEF;
+            --text-secondary: #8696A0;
+            --text-muted: #667781;
+            --input-bg: #2A3942;
+            --input-border: #3B4A54;
+            --footer-bg: #1F2C33;
+            --icon-color: #AEBAC1;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+            --shadow-bubble: 0 1px 0.5px rgba(0,0,0,0.2);
+            --img-bg: rgba(255,255,255,0.05);
+            --file-bg: rgba(255,255,255,0.06);
+            --scrollbar-thumb: rgba(255,255,255,0.15);
+        }
+
+        /* ── Reset & Base ───────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--chat-bg);
+            color: var(--text-primary);
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Subtle doodle pattern overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: var(--chat-pattern-opacity);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Header ─────────────────────────────────── */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--header-border);
+            box-shadow: var(--shadow-sm);
+            z-index: 20;
+            gap: 12px;
+            min-height: 56px;
+            position: relative;
+        }
+
+        .back-btn {
+            color: var(--icon-color);
+            text-decoration: none;
+            font-size: 1.35rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .back-btn:hover { background: var(--file-bg); }
+
+        .header-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #2DD4BF);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #fff;
+            font-size: 1.25rem;
+        }
+
+        .header-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-sub {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .teacher-indicator {
+            background: var(--accent);
+            color: #fff;
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .header-action-btn {
+            background: transparent;
+            border: none;
+            color: var(--icon-color);
+            font-size: 1.25rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .header-action-btn:hover { background: var(--file-bg); }
+
+        /* ── Chat Container ─────────────────────────── */
+        .chat-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 8px 6%;
+            display: flex;
+            flex-direction: column;
+            scroll-behavior: smooth;
+        }
+
+        .chat-messages::-webkit-scrollbar { width: 5px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px;
+        }
+
+        /* ── Message Wrapper ────────────────────────── */
+        .msg-row {
+            display: flex;
+            margin-bottom: 2px;
+            width: 100%;
+        }
+
+        .msg-row.mine { justify-content: flex-end; }
+        .msg-row.theirs { justify-content: flex-start; }
+
+        /* Add small gap after different user */
+        .msg-row.mine + .msg-row.theirs,
+        .msg-row.theirs + .msg-row.mine {
+            margin-top: 8px;
+        }
+
+        /* ── Message Bubble ─────────────────────────── */
+        .bubble {
+            position: relative;
+            max-width: 65%;
+            padding: 6px 8px 3px 8px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-bubble);
+            font-size: 0.875rem;
+            line-height: 1.45;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .msg-row.mine .bubble {
+            background: var(--bubble-mine);
+            border-top-right-radius: 0;
+        }
+
+        .msg-row.theirs .bubble {
+            background: var(--bubble-theirs);
+            border-top-left-radius: 0;
+        }
+
+        /* Bubble tails */
+        .bubble::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 8px;
+            height: 13px;
+        }
+
+        .msg-row.mine .bubble::after {
+            right: -8px;
+            clip-path: polygon(0 0, 0 100%, 100% 0);
+            background: var(--bubble-mine);
+        }
+
+        .msg-row.theirs .bubble::after {
+            left: -8px;
+            clip-path: polygon(100% 0, 0 0, 100% 100%);
+            background: var(--bubble-theirs);
+        }
+
+        /* Only show tail on first message in a consecutive group */
+        .msg-row.mine + .msg-row.mine .bubble::after { display: none; }
+        .msg-row.mine + .msg-row.mine .bubble { border-top-right-radius: 8px; }
+        .msg-row.theirs + .msg-row.theirs .bubble::after { display: none; }
+        .msg-row.theirs + .msg-row.theirs .bubble { border-top-left-radius: 8px; }
+
+        /* ── Sender Name ────────────────────────────── */
+        .bubble-sender {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--accent);
+        }
+
+        .msg-row.mine .bubble-sender { display: none; }
+
+        /* Only show sender on first message in consecutive group */
+        .msg-row.theirs + .msg-row.theirs .bubble-sender { display: none; }
+
+        .teacher-badge {
+            background: #10B981;
+            color: #fff;
+            font-size: 0.5625rem;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        /* ── Message Text ───────────────────────────── */
+        .bubble-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* ── Timestamp ──────────────────────────────── */
+        .bubble-time {
+            display: block;
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            line-height: 1;
+            margin-top: 2px;
+            padding-top: 1px;
+        }
+
+        .msg-row.mine .bubble-time {
+            text-align: right;
+            color: rgba(0,0,0,0.4);
+        }
+        [data-theme="dark"] .msg-row.mine .bubble-time { color: rgba(255,255,255,0.45); }
+
+        .msg-row.theirs .bubble-time {
+            text-align: left;
+        }
+
+        /* Spacer no longer needed */
+        .time-spacer { display: none; }
+
+        /* ── Image Messages ─────────────────────────── */
+        .bubble-img-wrap {
+            margin: 2px -4px 2px -4px;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            max-width: 280px;
+            background: var(--img-bg);
+        }
+
+        .bubble-img-wrap img {
+            display: block;
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .bubble-img-wrap img:hover { opacity: 0.92; }
+
+        /* Image with text: add some spacing */
+        .bubble-text + .bubble-img-wrap,
+        .bubble-img-wrap + .bubble-text {
+            margin-top: 4px;
+        }
+
+        /* ── File/Document Messages ─────────────────── */
+        .bubble-file {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--file-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 2px 0;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.15s;
+            max-width: 260px;
+        }
+        .bubble-file:hover { background: var(--img-bg); }
+
+        .bubble-file-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #EF4444;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .bubble-file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .bubble-file-name {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bubble-file-type {
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* ── Image Lightbox ─────────────────────────── */
+        .lightbox-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s, visibility 0.25s;
+            cursor: zoom-out;
+        }
+        .lightbox-overlay.active { opacity: 1; visibility: visible; }
+
+        .lightbox-overlay img {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .lightbox-close:hover { background: rgba(255,255,255,0.3); }
+
+        /* ── Footer / Input Bar ─────────────────────── */
+        .chat-footer {
+            display: flex;
+            align-items: flex-end;
+            padding: 4px 8px;
+            background: var(--footer-bg);
+            gap: 5px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .input-bar {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            background: var(--input-bg);
+            border-radius: 20px;
+            padding: 2px 6px 2px 4px;
+            min-height: 36px;
+            border: 1px solid var(--input-border);
+            transition: border-color 0.15s;
+        }
+        .input-bar:focus-within { border-color: var(--accent); }
+
+        .input-action {
+            background: transparent;
+            border: none;
+            color: var(--icon-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: color 0.15s, background 0.15s;
+        }
+        .input-action:hover { color: var(--accent); background: var(--file-bg); }
+
+        .input-field {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-family: inherit;
+            padding: 4px 4px;
+            line-height: 1.35;
+            outline: none;
+            resize: none;
+            max-height: 100px;
+            overflow-y: auto;
+            min-height: 22px;
+        }
+
+        .input-field::placeholder { color: var(--text-muted); }
+
+        .input-field::-webkit-scrollbar { width: 4px; }
+        .input-field::-webkit-scrollbar-track { background: transparent; }
+        .input-field::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s, transform 0.1s;
+        }
+        .send-btn:hover { background: var(--accent-hover); }
+        .send-btn:active { transform: scale(0.92); }
+
+        /* ── File Preview Strip ─────────────────────── */
+        .file-preview {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--footer-bg);
+            border-top: 1px solid var(--header-border);
+        }
+        .file-preview.active { display: flex; }
+
+        .file-preview-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: var(--img-bg);
+        }
+
+        .file-preview-name {
+            flex: 1;
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-preview-close {
+            background: transparent;
+            border: none;
+            color: var(--icon-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: background 0.15s;
+        }
+        .file-preview-close:hover { background: var(--file-bg); }
+
+        /* ── Upload progress indicator ──────────────── */
+        .upload-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--footer-bg);
+            border-top: 1px solid var(--header-border);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+        .upload-indicator.active { display: flex; }
+
+        .upload-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--header-border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Scroll-to-bottom FAB ───────────────────── */
+        .scroll-bottom-btn {
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--header-bg);
+            border: 1px solid var(--header-border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            color: var(--icon-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .scroll-bottom-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+        .scroll-bottom-btn.visible { display: flex; }
+
+        /* ── Animations ─────────────────────────────── */
+        @keyframes bubbleIn {
+            from { opacity: 0; transform: translateY(8px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .bubble { animation: bubbleIn 0.18s ease-out; }
+
+        /* ── Responsive ─────────────────────────────── */
+        @media (max-width: 768px) {
+            .chat-messages { padding: 6px 3%; }
+            .bubble { max-width: 82%; }
+            .bubble-img-wrap { max-width: 240px; }
+        }
+
+        @media (max-width: 480px) {
+            .header-actions { display: none; }
+            .chat-footer { padding: 3px 5px; gap: 4px; }
+            .input-bar { min-height: 34px; }
+            .send-btn { width: 34px; height: 34px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ── Header ──────────────────────────────────── -->
+    <div class="chat-header">
+        <a href="{% url 'discussion:discussion_list' %}" class="back-btn" title="Back"><i class="ri-arrow-left-line"></i></a>
+        <div class="header-avatar"><i class="ri-group-fill"></i></div>
+        <div class="header-info">
+            <div class="header-title">{{ course.title }}</div>
+            <div class="header-sub">
+                Discussion Group
+                {% if request.user.is_teacher %}<span class="teacher-indicator">Teacher</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Chat Body ──────────────────────────────── -->
+    <div class="chat-body">
+        <div class="chat-messages" id="chat-messages">
+            {% for msg in messages %}
+            <div class="msg-row {% if msg.user == request.user %}mine{% else %}theirs{% endif %}" data-user="{{ msg.user.user_id }}">
+                <div class="bubble">
+                    {% if msg.user != request.user %}
+                    <div class="bubble-sender">
+                        {{ msg.user.get_full_name|default:msg.user.username }}
+                        {% if msg.user.is_teacher %}<span class="teacher-badge">Teacher</span>{% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if msg.content %}<div class="bubble-text">{{ msg.content }}</div>{% endif %}
+
+                    {% if msg.attachment %}
+                        {% if msg.attachment.url|lower|slice:"-4:" == '.jpg' or msg.attachment.url|lower|slice:"-4:" == '.png' or msg.attachment.url|lower|slice:"-5:" == '.jpeg' %}
+                            <div class="bubble-img-wrap">
+                                <img src="{{ msg.attachment.url }}" alt="Image" loading="lazy" onclick="openLightbox(this.src)">
+                            </div>
+                        {% else %}
+                            <a href="{{ msg.attachment.url }}" target="_blank" class="bubble-file">
+                                <div class="bubble-file-icon"><i class="ri-file-text-line"></i></div>
+                                <div class="bubble-file-info">
+                                    <div class="bubble-file-name">Document</div>
+                                    <div class="bubble-file-type">PDF</div>
+                                </div>
+                                <i class="ri-download-line" style="color:var(--text-muted);font-size:1.1rem;"></i>
+                            </a>
+                        {% endif %}
+                    {% endif %}
+
+                    <span class="time-spacer"></span>
+                    <span class="bubble-time">{{ msg.created_at|date:"h:i A" }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Scroll-to-bottom FAB -->
+        <button class="scroll-bottom-btn" id="scroll-bottom-btn" title="Scroll to bottom">
+            <i class="ri-arrow-down-line"></i>
+        </button>
+    </div>
+
+    <!-- ── Upload Indicator ───────────────────────── -->
+    <div class="upload-indicator" id="upload-indicator">
+        <div class="upload-spinner"></div>
+        <span>Uploading file…</span>
+    </div>
+
+    <!-- ── Footer / Input ─────────────────────────── -->
+    <div class="chat-footer">
+        <div class="input-bar">
+            <input type="file" id="file-upload" style="display:none" accept=".jpg,.jpeg,.png,.pdf">
+            <button class="input-action" title="Attach file" onclick="document.getElementById('file-upload').click()">
+                <i class="ri-attachment-2"></i>
+            </button>
+            <textarea id="chat-input" class="input-field" placeholder="Type a message" rows="1"></textarea>
+        </div>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send">
+            <i class="ri-send-plane-fill"></i>
+        </button>
+    </div>
+
+    <!-- ── Image Lightbox ─────────────────────────── -->
+    <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+        <button class="lightbox-close" onclick="closeLightbox()"><i class="ri-close-line"></i></button>
+        <img id="lightbox-img" src="" alt="Preview">
+    </div>
+
+    <script>
+    (function () {
+        /* ── Core refs ──────────────────────────────── */
+        const courseId      = "{{ course.id }}";
+        const currentUserId = "{{ request.user.user_id }}";
+        const chatMessages  = document.getElementById('chat-messages');
+        const chatInput     = document.getElementById('chat-input');
+        const scrollBtn     = document.getElementById('scroll-bottom-btn');
+        const uploadInd     = document.getElementById('upload-indicator');
+
+        /* ── WebSocket ──────────────────────────────── */
+        const wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
+        let chatSocket = null;
+        let reconnectTimer = null;
+
+        function connectWebSocket() {
+            if (chatSocket) {
+                chatSocket.onclose = null;
+                chatSocket.close();
+            }
+            chatSocket = new WebSocket(wsProtocol + location.host + '/ws/discussion/' + courseId + '/');
+
+            chatSocket.onmessage = function (e) {
+                const data = JSON.parse(e.data);
+                appendMessage(data);
+            };
+
+            chatSocket.onclose = function () {
+                console.warn('Chat socket closed. Attempting reconnect in 3s…');
+                clearTimeout(reconnectTimer);
+                reconnectTimer = setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        connectWebSocket();
+
+        /* ── Scroll helpers ─────────────────────────── */
+        function scrollToBottom(smooth) {
+            chatMessages.scrollTo({
+                top: chatMessages.scrollHeight,
+                behavior: smooth ? 'smooth' : 'instant'
+            });
+        }
+
+        function isNearBottom() {
+            return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 120;
+        }
+
+        chatMessages.addEventListener('scroll', () => {
+            scrollBtn.classList.toggle('visible', !isNearBottom());
+        });
+
+        scrollBtn.addEventListener('click', () => scrollToBottom(true));
+
+        // Initial scroll
+        scrollToBottom(false);
+
+        /* ── Append Message ─────────────────────────── */
+        function appendMessage(data) {
+            const isMine = data.user_id === currentUserId;
+            const row = document.createElement('div');
+            row.className = `msg-row ${isMine ? 'mine' : 'theirs'}`;
+            row.dataset.user = data.user_id;
+
+            let senderHtml = '';
+            if (!isMine) {
+                senderHtml = `
+                    <div class="bubble-sender">
+                        ${esc(data.user_name)}
+                        ${data.is_teacher ? '<span class="teacher-badge">Teacher</span>' : ''}
+                    </div>`;
+            }
+
+            let contentHtml = '';
+            if (data.message) {
+                contentHtml += `<div class="bubble-text">${esc(data.message)}</div>`;
+            }
+
+            if (data.attachment_url) {
+                const urlLower = data.attachment_url.toLowerCase();
+                if (urlLower.endsWith('.jpg') || urlLower.endsWith('.png') || urlLower.endsWith('.jpeg')) {
+                    contentHtml += `
+                        <div class="bubble-img-wrap">
+                            <img src="${data.attachment_url}" alt="Image" loading="lazy" onclick="openLightbox(this.src)">
+                        </div>`;
+                } else {
+                    contentHtml += `
+                        <a href="${data.attachment_url}" target="_blank" class="bubble-file">
+                            <div class="bubble-file-icon"><i class="ri-file-text-line"></i></div>
+                            <div class="bubble-file-info">
+                                <div class="bubble-file-name">Document</div>
+                                <div class="bubble-file-type">PDF</div>
+                            </div>
+                            <i class="ri-download-line" style="color:var(--text-muted);font-size:1.1rem;"></i>
+                        </a>`;
+                }
+            }
+
+            row.innerHTML = `
+                <div class="bubble">
+                    ${senderHtml}
+                    ${contentHtml}
+                    <span class="time-spacer"></span>
+                    <span class="bubble-time">${esc(data.created_at)}</span>
+                </div>`;
+
+            const wasNearBottom = isNearBottom();
+            chatMessages.appendChild(row);
+            if (wasNearBottom || isMine) scrollToBottom(true);
+        }
+
+        function esc(str) {
+            const d = document.createElement('div');
+            d.textContent = str || '';
+            return d.innerHTML;
+        }
+
+        /* ── Send Message ───────────────────────────── */
+        window.sendMessage = function () {
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({ message: msg }));
+                chatInput.value = '';
+                resizeInput();
+                chatInput.focus();
+            } else {
+                fetch("{% url 'discussion:send_message' course.id %}", {
+                    method: 'POST',
+                    body: JSON.stringify({ message: msg }),
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        appendMessage({
+                            message: msg,
+                            user_id: currentUserId,
+                            user_name: 'You',
+                            is_teacher: false,
+                            created_at: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                        });
+                        chatInput.value = '';
+                        resizeInput();
+                        chatInput.focus();
+                    } else {
+                        alert(data.error || 'Failed to send message.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Send error:', err);
+                    alert("Disconnected. Failed to send message.");
+                });
+            }
+        };
+
+        /* ── Auto-resize Textarea ───────────────────── */
+        function resizeInput() {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+        }
+
+        chatInput.addEventListener('input', resizeInput);
+
+        chatInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        /* ── File Upload ────────────────────────────── */
+        document.getElementById('file-upload').addEventListener('change', function () {
+            if (!this.files || !this.files[0]) return;
+
+            const formData = new FormData();
+            formData.append('attachment', this.files[0]);
+
+            uploadInd.classList.add('active');
+
+            fetch("{% url 'discussion:upload_attachment' course.id %}", {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                uploadInd.classList.remove('active');
+                if (!data.success) alert(data.error);
+            })
+            .catch(err => {
+                uploadInd.classList.remove('active');
+                console.error('Upload error:', err);
+            });
+
+            this.value = '';
+        });
+
+        /* ── Lightbox ───────────────────────────────── */
+        window.openLightbox = function (src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox').classList.add('active');
+        };
+
+        window.closeLightbox = function () {
+            document.getElementById('lightbox').classList.remove('active');
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLightbox();
+        });
+    })();
+    </script>
+</body>
+</html>

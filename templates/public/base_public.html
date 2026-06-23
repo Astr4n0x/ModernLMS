@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ModernLMS{% endblock %} | Best EdTech Platform</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/public.css' %}?v=2">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{% url 'public:home' %}" class="brand">
+                <i class="ri-graduation-cap-fill"></i> ModernLMS
+            </a>
+            
+            <button class="mobile-menu-btn" id="mobile-menu-btn">
+                <i class="ri-menu-3-line"></i>
+            </button>
+            
+            <div class="nav-links" id="nav-links">
+                <a href="{% url 'public:home' %}" class="nav-link">Home</a>
+                <a href="{% url 'public:courses' %}" class="nav-link">Courses</a>
+                <a href="{% url 'public:free_courses' %}" class="nav-link">Free Courses</a>
+                <a href="{% url 'public:about' %}" class="nav-link">About</a>
+                <a href="{% url 'public:shop' %}" class="nav-link">Shop</a>
+                
+                <div class="nav-auth">
+                    {% if request.user.is_authenticated %}
+                        <div class="dropdown">
+                            <button class="nav-profile-btn">
+                                <i class="ri-calendar-todo-fill"></i> Dashboard
+                            </button>
+                            <div class="dropdown-content">
+                                {% if request.user.is_teacher %}
+                                    <a href="/teacher/"><i class="ri-dashboard-line"></i> Teacher Panel</a>
+                                {% else %}
+                                    <a href="/dashboard/"><i class="ri-dashboard-line"></i> Student Dashboard</a>
+                                {% endif %}
+                                <a href="{% url 'accounts:edit_profile' %}"><i class="ri-settings-4-line"></i> Settings</a>
+                                <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit"><i class="ri-logout-box-r-line"></i> Logout</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}" class="btn btn-outline nav-outline">Log in</a>
+                        <a href="{% url 'accounts:signup' %}" class="btn btn-primary nav-primary">Sign up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible animate-fade-in">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-col brand-col">
+                <a href="{% url 'public:home' %}" class="brand">
+                    <i class="ri-graduation-cap-fill"></i> ModernLMS
+                </a>
+                <p>Empowering the next generation with world-class education and comprehensive curriculum structured for success.</p>
+                <div class="social-links">
+                    <a href="#"><i class="ri-facebook-fill"></i></a>
+                    <a href="#"><i class="ri-twitter-x-line"></i></a>
+                    <a href="#"><i class="ri-instagram-line"></i></a>
+                    <a href="#"><i class="ri-youtube-fill"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="{% url 'public:home' %}">Home</a></li>
+                    <li><a href="{% url 'public:courses' %}">All Courses</a></li>
+                    <li><a href="{% url 'public:free_courses' %}">Free Courses</a></li>
+                    <li><a href="{% url 'public:about' %}">About Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#contact">Contact Us</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; {% now "Y" %} ModernLMS. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            document.getElementById('nav-links').classList.toggle('active');
+        });
+
+        // Hide alerts after 5 seconds
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

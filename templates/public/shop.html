@@ -1,0 +1,16 @@
+{% extends "public/base_public.html" %}
+
+{% block title %}Shop | ModernLMS{% endblock %}
+
+{% block content %}
+<section class="section" style="min-height: 50vh; display: flex; align-items: center; justify-content: center; text-align: center;">
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; padding: 4rem; box-shadow: var(--shadow-sm); width: 100%; max-width: 600px;">
+        <div style="font-size: 4rem; color: var(--primary); margin-bottom: 1.5rem;">
+            <i class="ri-store-3-line"></i>
+        </div>
+        <h2 style="font-size: 2rem; margin-bottom: 1rem;">Coming Soon</h2>
+        <p style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2rem;">We are working hard to bring you exclusive educational merchandise and print materials. Stay tuned!</p>
+        <a href="{% url 'public:courses' %}" class="btn btn-primary">Explore Courses Meanwhile</a>
+    </div>
+</section>
+{% endblock %}

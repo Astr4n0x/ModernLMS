@@ -1,0 +1,637 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Scholarships & Admissions{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}?v=2">
+<style>
+/* ── Page Hero ─────────────────────────────── */
+.scholar-hero {
+    background: linear-gradient(135deg, #778873 0%, #5f6e5c 50%, #A1BC98 100%);
+    border-radius: var(--radius-xl);
+    padding: 2.5rem 2rem;
+    margin-bottom: 2rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+.scholar-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+}
+.scholar-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 30px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+}
+.hero-content { position: relative; z-index: 1; }
+.hero-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+}
+.hero-sub {
+    font-size: 1rem;
+    opacity: 0.85;
+    max-width: 560px;
+    line-height: 1.6;
+}
+.hero-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+.hero-stat { text-align: center; }
+.hero-stat-num { font-size: 1.75rem; font-weight: 800; display: block; }
+.hero-stat-lbl { font-size: 0.75rem; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* ── Filters ───────────────────────────────── */
+.filter-bar {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.75rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+.filter-bar .filter-group { flex: 1; min-width: 180px; }
+.filter-bar label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.filter-bar select {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color .2s;
+}
+.filter-bar select:focus { outline: none; border-color: var(--primary-color); }
+.filter-btn {
+    padding: 0.625rem 1.25rem;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: inherit;
+    transition: all .2s;
+}
+.filter-btn.primary { background: var(--primary-color); color: #fff; }
+.filter-btn.primary:hover { background: var(--primary-hover); }
+.filter-btn.ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+.filter-btn.ghost:hover { background: var(--border-color); color: var(--text-primary); }
+
+/* ── Flash Messages ─────────────────────────── */
+.flash-msg {
+    padding: 0.875rem 1.25rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-left: 4px solid;
+    animation: slideIn .25s ease;
+}
+.flash-msg.success { background: rgba(16,185,129,.1); color: #10b981; border-color: #10b981; }
+.flash-msg.warning { background: rgba(245,158,11,.1); color: #f59e0b; border-color: #f59e0b; }
+.flash-msg.error   { background: rgba(239,68,68,.1);  color: #ef4444; border-color: #ef4444; }
+@keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:none; } }
+
+/* ── Scholarship Grid ───────────────────────── */
+.scholar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+}
+.scholar-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: transform .25s, box-shadow .25s;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+.scholar-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,.15);
+}
+.scholar-card.featured { border-color: #A1BC98; }
+.featured-ribbon {
+    position: absolute; top: 16px; right: -28px;
+    background: linear-gradient(135deg, #778873, #5f6e5c);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 3px 36px;
+    transform: rotate(45deg);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Card accent bar */
+.card-accent { height: 5px; }
+.accent-blue   { background: linear-gradient(90deg,#778873,#A1BC98); }
+.accent-green  { background: linear-gradient(90deg,#059669,#34d399); }
+.accent-purple { background: linear-gradient(90deg,#5f6e5c,#DCCFC0); }
+.accent-orange { background: linear-gradient(90deg,#d97706,#fbbf24); }
+.accent-red    { background: linear-gradient(90deg,#dc2626,#f87171); }
+.accent-teal   { background: linear-gradient(90deg,#0d9488,#2dd4bf); }
+
+.card-body { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; gap: .75rem; }
+
+.card-header-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+.card-icon-wrap {
+    width: 48px; height: 48px;
+    border-radius: var(--radius-lg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+.icon-blue   { background: rgba(119,136,115,.12);  color: #778873; }
+.icon-green  { background: rgba(5,150,105,.12);  color: #059669; }
+.icon-purple { background: rgba(95,110,92,.12); color: #5f6e5c; }
+.icon-orange { background: rgba(217,119,6,.12);  color: #d97706; }
+.icon-red    { background: rgba(220,38,38,.12);  color: #dc2626; }
+.icon-teal   { background: rgba(13,148,136,.12); color: #0d9488; }
+
+.card-title-wrap { flex: 1; }
+.card-title {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+}
+.card-provider {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.tag-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+.tag {
+    font-size: 0.72rem;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+.tag-local   { background: rgba(16,185,129,.12); color: #10b981; }
+.tag-intl    { background: rgba(119,136,115,.12);  color: #778873; }
+.tag-open    { background: rgba(16,185,129,.15); color: #059669; }
+.tag-closed  { background: rgba(239,68,68,.12);  color: #ef4444; }
+.tag-upcoming{ background: rgba(245,158,11,.12); color: #f59e0b; }
+.tag-level   { background: rgba(161,188,152,.1);  color: #778873; }
+.tag-country { background: rgba(20,184,166,.1);  color: #0d9488; }
+
+.benefits-box {
+    background: var(--bg-body);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+.benefits-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+}
+
+.desc-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.card-footer-row {
+    display: flex; gap: .75rem; margin-top: auto; padding-top: .75rem;
+    border-top: 1px solid var(--border-color);
+    align-items: center;
+    flex-wrap: wrap;
+}
+.deadline-txt {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    flex: 1;
+}
+
+/* ── Action Buttons ─────────────────────────── */
+.btn-apply {
+    padding: 0.55rem 1.1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+    display: inline-flex; align-items: center; gap: .4rem;
+    white-space: nowrap;
+}
+.btn-apply.open   { background: var(--primary-color); color: #fff; }
+.btn-apply.open:hover { background: var(--primary-hover); }
+.btn-applied { background: rgba(16,185,129,.15); color: #10b981; cursor: default; }
+.btn-closed  { background: var(--border-color); color: var(--text-secondary); cursor: default; }
+.btn-ext {
+    padding: 0.55rem 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all .2s;
+    display: inline-flex; align-items: center; gap: .35rem;
+}
+.btn-ext:hover { border-color: var(--primary-color); color: var(--primary-color); }
+
+/* ── Apply Modal ────────────────────────────── */
+.modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(4px);
+    z-index: 9000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s;
+}
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+.modal-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    width: 100%; max-width: 520px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.3);
+    transform: translateY(16px);
+    transition: transform .25s;
+    overflow: hidden;
+}
+.modal-overlay.active .modal-box { transform: none; }
+.modal-hdr {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+}
+.modal-hdr h3 { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); }
+.modal-hdr p  { font-size: 0.875rem; color: var(--text-secondary); margin-top: .25rem; }
+.modal-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-secondary); font-size: 1.25rem;
+    padding: 0.25rem; border-radius: 6px;
+    transition: background .15s;
+}
+.modal-close:hover { background: var(--border-color); }
+.modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.form-field { display: flex; flex-direction: column; gap: .4rem; }
+.form-field label { font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); }
+.form-field input,
+.form-field textarea {
+    padding: 0.7rem .875rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9375rem;
+    transition: border-color .2s;
+    resize: vertical;
+}
+.form-field input:focus,
+.form-field textarea:focus { outline: none; border-color: var(--primary-color); }
+.modal-ftr {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex; justify-content: flex-end; gap: .75rem;
+}
+.btn-cancel {
+    padding: 0.65rem 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer; font-family: inherit; font-size: .875rem; font-weight: 500;
+    transition: all .2s;
+}
+.btn-cancel:hover { background: var(--border-color); }
+.btn-submit {
+    padding: 0.65rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--primary-color);
+    color: #fff;
+    cursor: pointer; font-family: inherit; font-size: .875rem; font-weight: 600;
+    display: flex; align-items: center; gap: .4rem;
+    transition: background .2s;
+}
+.btn-submit:hover { background: var(--primary-hover); }
+
+/* ── Empty State ────────────────────────────── */
+.empty-state {
+    text-align: center; padding: 5rem 2rem;
+    background: var(--bg-surface); border: 1px dashed var(--border-color);
+    border-radius: var(--radius-xl);
+}
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .4; }
+.empty-state h3 { font-size: 1.25rem; color: var(--text-primary); margin-bottom: .5rem; }
+.empty-state p  { color: var(--text-secondary); }
+</style>
+{% endblock %}
+
+{% block page_heading %}Scholarships & Admissions{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+<div style="margin-bottom: 1.5rem;">
+    {% for message in messages %}
+    <div class="flash-msg {{ message.tags }}">
+        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'warning' %}fa-exclamation-circle{% else %}fa-times-circle{% endif %}"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Hero Banner -->
+<div class="scholar-hero animate-fade-in">
+    <div class="hero-content">
+        <h1 class="hero-title">🏆 Scholarships & Admissions</h1>
+        <p class="hero-sub">Discover funded opportunities from local boards to world-class international programmes. Filter, learn, and apply all in one place.</p>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span class="hero-stat-num">{{ scholarships.count }}</span>
+                <span class="hero-stat-lbl">Opportunities</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-num">{{ applied_ids|length }}</span>
+                <span class="hero-stat-lbl">Applied</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-num">5+</span>
+                <span class="hero-stat-lbl">Countries</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<form method="GET" action="" class="filter-bar animate-fade-in">
+    <div class="filter-group">
+        <label for="f-category">Category</label>
+        <select name="category" id="f-category">
+            <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
+            <option value="local"         {% if category_filter == 'local' %}selected{% endif %}>Local (Bangladesh)</option>
+            <option value="international" {% if category_filter == 'international' %}selected{% endif %}>International</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label for="f-level">Study Level</label>
+        <select name="level" id="f-level">
+            <option value="all"           {% if level_filter == 'all' %}selected{% endif %}>All Levels</option>
+            <option value="primary"       {% if level_filter == 'primary' %}selected{% endif %}>Primary</option>
+            <option value="secondary"     {% if level_filter == 'secondary' %}selected{% endif %}>Secondary</option>
+            <option value="undergraduate" {% if level_filter == 'undergraduate' %}selected{% endif %}>Undergraduate</option>
+            <option value="postgraduate"  {% if level_filter == 'postgraduate' %}selected{% endif %}>Postgraduate</option>
+            <option value="any"           {% if level_filter == 'any' %}selected{% endif %}>Any Level</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label for="f-status">Status</label>
+        <select name="status" id="f-status">
+            <option value="all"      {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+            <option value="open"     {% if status_filter == 'open' %}selected{% endif %}>Open</option>
+            <option value="upcoming" {% if status_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
+            <option value="closed"   {% if status_filter == 'closed' %}selected{% endif %}>Closed</option>
+        </select>
+    </div>
+    <div style="display:flex; gap:.5rem; align-items:flex-end;">
+        <button type="submit" class="filter-btn primary"><i class="fas fa-filter"></i> Filter</button>
+        <a href="{% url 'courses:scholarships' %}" class="filter-btn ghost">Reset</a>
+    </div>
+</form>
+
+<!-- Grid -->
+{% if scholarships %}
+<section class="scholar-grid">
+    {% for s in scholarships %}
+    <article class="scholar-card animate-fade-in {% if s.is_featured %}featured{% endif %}"
+             style="animation-delay: {{ forloop.counter0|floatformat }}0ms">
+
+        {% if s.is_featured %}
+        <div class="featured-ribbon">Featured</div>
+        {% endif %}
+
+        <div class="card-accent accent-{{ s.color_class }}"></div>
+
+        <div class="card-body">
+            <!-- Header -->
+            <div class="card-header-row">
+                <div class="card-icon-wrap icon-{{ s.color_class }}">
+                    <i class="{{ s.icon }}"></i>
+                </div>
+                <div class="card-title-wrap">
+                    <h2 class="card-title">{{ s.title }}</h2>
+                    <p class="card-provider">{{ s.provider }}</p>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="tag-row">
+                <span class="tag {% if s.category == 'local' %}tag-local{% else %}tag-intl{% endif %}">
+                    {% if s.category == 'local' %}🇧🇩 Local{% else %}🌍 International{% endif %}
+                </span>
+                <span class="tag {% if s.status == 'open' %}tag-open{% elif s.status == 'closed' %}tag-closed{% else %}tag-upcoming{% endif %}">
+                    {% if s.status == 'open' %}● Open{% elif s.status == 'closed' %}✕ Closed{% else %}◷ Upcoming{% endif %}
+                </span>
+                <span class="tag tag-level">{{ s.get_level_display }}</span>
+                <span class="tag tag-country">
+                    <i class="fas fa-map-marker-alt" style="font-size:.65rem;"></i> {{ s.country }}
+                </span>
+            </div>
+
+            <!-- Benefits Box -->
+            <div class="benefits-box">
+                <div class="benefits-label"><i class="fas fa-gift"></i> Benefits</div>
+                {{ s.benefits }}
+            </div>
+
+            <!-- Description -->
+            <p class="desc-text">{{ s.description }}</p>
+
+            <!-- Footer -->
+            <div class="card-footer-row">
+                <span class="deadline-txt">
+                    {% if s.deadline %}
+                    <i class="fas fa-calendar-alt"></i> Deadline: {{ s.deadline|date:"M d, Y" }}
+                    {% else %}
+                    <i class="fas fa-info-circle"></i> Check official site for deadline
+                    {% endif %}
+                </span>
+
+                {% if s.apply_url %}
+                <a href="{{ s.apply_url }}" target="_blank" rel="noopener" class="btn-ext">
+                    <i class="fas fa-external-link-alt"></i> Official Site
+                </a>
+                {% endif %}
+
+                {% if s.status == 'open' %}
+                    {% if s.id in applied_ids %}
+                    <button class="btn-apply btn-applied" disabled>
+                        <i class="fas fa-check"></i> Applied
+                    </button>
+                    {% else %}
+                    <button class="btn-apply open"
+                            onclick="openApplyModal({{ s.id }}, '{{ s.title|escapejs }}', '{{ s.provider|escapejs }}')">
+                        <i class="fas fa-paper-plane"></i> Apply Now
+                    </button>
+                    {% endif %}
+                {% elif s.status == 'upcoming' %}
+                    <button class="btn-apply btn-closed" disabled>
+                        <i class="fas fa-clock"></i> Coming Soon
+                    </button>
+                {% else %}
+                    <button class="btn-apply btn-closed" disabled>
+                        <i class="fas fa-lock"></i> Closed
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</section>
+
+{% else %}
+<div class="empty-state animate-fade-in">
+    <div class="empty-icon"><i class="fas fa-search"></i></div>
+    <h3>No Scholarships Found</h3>
+    <p>Try adjusting your filters to see more opportunities.</p>
+</div>
+{% endif %}
+
+<!-- ── Application Modal ─────────────────────── -->
+<div id="apply-modal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box">
+        <div class="modal-hdr">
+            <div>
+                <h3 id="modal-title">Apply for Scholarship</h3>
+                <p id="modal-provider"></p>
+            </div>
+            <button class="modal-close" onclick="closeApplyModal()" aria-label="Close">×</button>
+        </div>
+        <form id="apply-form" method="POST" action="">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-field" style="grid-column:1/-1;">
+                        <label for="f-full-name">Full Name <span style="color:#ef4444">*</span></label>
+                        <input type="text" id="f-full-name" name="full_name"
+                               value="{{ user.get_full_name }}" required placeholder="Your full legal name">
+                    </div>
+                    <div class="form-field">
+                        <label for="f-email">Email Address <span style="color:#ef4444">*</span></label>
+                        <input type="email" id="f-email" name="email"
+                               value="{{ user.email }}" required placeholder="your@email.com">
+                    </div>
+                    <div class="form-field">
+                        <label for="f-phone">Phone (Optional)</label>
+                        <input type="tel" id="f-phone" name="phone" placeholder="+880 17xx-xxxxxx">
+                    </div>
+                    <div class="form-field" style="grid-column:1/-1;">
+                        <label for="f-message">Why do you want this scholarship?</label>
+                        <textarea id="f-message" name="message" rows="4"
+                                  placeholder="Briefly describe your motivation, academic background, and goals..."></textarea>
+                    </div>
+                </div>
+                <div style="background:rgba(119,136,115,.08); border:1px solid rgba(119,136,115,.2); border-radius:var(--radius-md); padding:.75rem 1rem; font-size:.8125rem; color:var(--text-secondary);">
+                    <i class="fas fa-shield-alt" style="color:#778873;"></i>
+                    Your application will be submitted to the institute's admission team and reviewed shortly.
+                </div>
+            </div>
+            <div class="modal-ftr">
+                <button type="button" class="btn-cancel" onclick="closeApplyModal()">Cancel</button>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-paper-plane"></i> Submit Application
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openApplyModal(scholarshipId, title, provider) {
+    const modal = document.getElementById('apply-modal');
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-provider').textContent = provider;
+    document.getElementById('apply-form').action = `/scholarships/${scholarshipId}/apply/`;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('f-full-name').focus(), 100);
+}
+
+function closeApplyModal() {
+    const modal = document.getElementById('apply-modal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Close on overlay click
+document.getElementById('apply-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeApplyModal();
+});
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeApplyModal();
+});
+</script>
+{% endblock %}

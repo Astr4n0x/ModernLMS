@@ -1,0 +1,448 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}{{ exam.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}">
+<link rel="stylesheet" href="{% static 'css/exam.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- ── Sticky Timer Bar ──────────────────────────────────────── -->
+<div class="exam-timer-bar" id="exam-timer-bar">
+    <div class="exam-timer-info">
+        <span class="exam-timer-label">Now Attempting</span>
+        <span class="exam-timer-title">{{ exam.title }}</span>
+    </div>
+    <div class="exam-timer-badge" id="exam-timer-badge">
+        <i class="fas fa-clock"></i>
+        <span id="exam-timer-display">--:--:--</span>
+    </div>
+</div>
+
+<!-- ── Result Modal Overlay ──────────────────────────────────── -->
+<div class="result-modal-overlay" id="result-modal-overlay">
+    <div class="result-modal" id="result-modal">
+        <div class="result-modal-icon">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <h2 class="result-modal-title">Exam Submitted!</h2>
+        <p class="result-modal-subtitle">Here's how you performed</p>
+
+        <div class="result-score-circle">
+            <span class="result-score-num" id="result-score-num">0</span>
+            <span class="result-score-den" id="result-score-den">/0</span>
+        </div>
+
+        <div class="result-stats-row">
+            <div class="result-stat correct">
+                <i class="fas fa-check-circle"></i>
+                <span class="result-stat-val" id="result-correct">0</span>
+                <span class="result-stat-label">Correct</span>
+            </div>
+            <div class="result-stat wrong">
+                <i class="fas fa-times-circle"></i>
+                <span class="result-stat-val" id="result-wrong">0</span>
+                <span class="result-stat-label">Wrong</span>
+            </div>
+            <div class="result-stat total">
+                <i class="fas fa-list-ol"></i>
+                <span class="result-stat-val" id="result-total">0</span>
+                <span class="result-stat-label">Total</span>
+            </div>
+        </div>
+
+        <div class="result-modal-actions">
+            <button class="btn-review-answers" id="btn-review-answers" onclick="closeResultModal()">
+                <i class="fas fa-eye"></i> Review Answers
+            </button>
+            <a href="{% url 'courses:past_exams' %}" class="btn-back-exams-modal">
+                <i class="fas fa-arrow-left"></i> Back to Exams
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ── Main Exam Area ────────────────────────────────────────── -->
+<div class="exam-layout">
+
+    <!-- Header -->
+    <div class="exam-header">
+        <h1>{{ exam.title }}</h1>
+        <div class="exam-meta-row">
+            <span class="exam-meta-badge"><i class="fas fa-book"></i> {{ exam.course.title }}</span>
+            {% if exam.subject %}
+            <span class="exam-meta-badge"><i class="fas fa-layer-group"></i> {{ exam.subject.title }}</span>
+            {% endif %}
+            <span class="exam-meta-badge"><i class="fas fa-clock"></i> {{ exam.duration_minutes }} minutes</span>
+            <span class="exam-meta-badge"><i class="fas fa-question-circle"></i> {{ exam.total_questions }} questions</span>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div>
+        <div class="exam-progress-bar-wrap">
+            <div class="exam-progress-bar-fill" id="progress-fill" style="width: 0%;"></div>
+        </div>
+        <p class="exam-progress-text" id="progress-text">0 of {{ exam.total_questions }} answered</p>
+    </div>
+
+    <!-- Questions -->
+    {% for q in questions %}
+    <div class="question-card" id="question-card-{{ q.id }}">
+        <div class="question-number">Question {{ q.order }}</div>
+        <div class="question-text">{{ q.text }}</div>
+        <div class="options-grid" id="options-{{ q.id }}">
+            {% for opt in q.options %}
+            {% with counter=forloop.counter0 %}
+            <button class="option-btn"
+                    id="opt-{{ opt.id }}"
+                    data-question="{{ q.id }}"
+                    data-option="{{ opt.id }}"
+                    {% if q.selected_option_id %}
+                        {% if q.selected_option_id == opt.id %}data-preselected="true"{% endif %}
+                        data-locked="true"
+                    {% endif %}
+                    onclick="selectOption(this)">
+                <span class="option-label">{% if counter == 0 %}A{% elif counter == 1 %}B{% elif counter == 2 %}C{% elif counter == 3 %}D{% else %}E{% endif %}</span>
+                <span>{{ opt.text }}</span>
+            </button>
+            {% endwith %}
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-question"></i></div>
+        <h3>No questions in this exam yet.</h3>
+    </div>
+    {% endfor %}
+
+    <!-- Submit Section -->
+    <div class="exam-submit-section" id="exam-submit-section">
+        <p>When you are done, click submit. Answers cannot be changed after selection.</p>
+        <button type="button" class="btn-submit-exam" id="submit-btn" onclick="handleSubmit()">
+            <i class="fas fa-paper-plane"></i>
+            Submit Exam
+        </button>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    /* ── Config ─────────────────────────────────────────── */
+    const ATTEMPT_ID      = {{ attempt.id }};
+    const EXAM_ID         = {{ exam.id }};
+    const TOTAL_Q         = {{ exam.total_questions }};
+    const SAVE_URL        = "{% url 'courses:save_answer' exam.id %}";
+    const SUBMIT_URL      = "{% url 'courses:exam_submit' exam.id %}";
+    const CSRF_TOKEN      = "{{ csrf_token }}";
+    let   remainingSeconds = {{ remaining_seconds }};
+    let   isSubmitted      = false;
+
+    /* ── Timer ──────────────────────────────────────────── */
+    const timerDisplay = document.getElementById('exam-timer-display');
+    const timerBadge   = document.getElementById('exam-timer-badge');
+    const timerBar     = document.getElementById('exam-timer-bar');
+
+    function formatTime(sec) {
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+    }
+
+    function tick() {
+        if (isSubmitted) return;
+        if (remainingSeconds <= 0) {
+            timerDisplay.textContent = '00:00:00';
+            timerBadge.classList.add('danger');
+            autoSubmit();
+            return;
+        }
+        timerDisplay.textContent = formatTime(remainingSeconds);
+        if (remainingSeconds <= 60) {
+            timerBadge.classList.add('danger');
+        }
+        remainingSeconds--;
+    }
+
+    tick();
+    const timerInterval = setInterval(tick, 1000);
+
+    function autoSubmit() {
+        clearInterval(timerInterval);
+        if (isSubmitted) return;
+        // Brief delay so user sees 00:00:00
+        setTimeout(() => { submitExamAjax(); }, 800);
+    }
+
+    /* ── Progress Tracking ──────────────────────────────── */
+    const answeredSet = new Set();
+    const progFill    = document.getElementById('progress-fill');
+    const progText    = document.getElementById('progress-text');
+
+    function updateProgress() {
+        const pct = TOTAL_Q > 0 ? (answeredSet.size / TOTAL_Q) * 100 : 0;
+        progFill.style.width = pct + '%';
+        progText.textContent = `${answeredSet.size} of ${TOTAL_Q} answered`;
+    }
+
+    /* ── Restore pre-selected options (page refresh) ────── */
+    document.querySelectorAll('[data-preselected="true"]').forEach(btn => {
+        btn.classList.add('selected');
+        lockOptions(btn.dataset.question, btn.dataset.option);
+        answeredSet.add(btn.dataset.question);
+    });
+    updateProgress();
+
+    /* ── Option Selection ───────────────────────────────── */
+    window.selectOption = function (btn) {
+        const questionId = btn.dataset.question;
+        const optionId   = btn.dataset.option;
+
+        // Already locked?
+        if (btn.classList.contains('disabled') || btn.dataset.locked === 'true') return;
+        if (isSubmitted) return;
+
+        // Optimistic UI - lock immediately
+        btn.classList.add('selected');
+        lockOptions(questionId, optionId);
+        answeredSet.add(questionId);
+        updateProgress();
+
+        // Save to backend
+        fetch(SAVE_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': CSRF_TOKEN,
+            },
+            body: JSON.stringify({
+                attempt_id:  ATTEMPT_ID,
+                question_id: parseInt(questionId),
+                option_id:   parseInt(optionId),
+            }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) {
+                console.warn('Save answer error:', data.error);
+            }
+        })
+        .catch(err => console.error('Network error saving answer:', err));
+    };
+
+    function lockOptions(questionId, selectedOptionId) {
+        const container = document.getElementById('options-' + questionId);
+        if (!container) return;
+        container.querySelectorAll('.option-btn').forEach(b => {
+            b.dataset.locked = 'true';
+            if (b.dataset.option !== selectedOptionId) {
+                b.classList.add('disabled');
+            }
+        });
+    }
+
+    /* ── Submit Exam (AJAX) ─────────────────────────────── */
+    function submitExamAjax() {
+        if (isSubmitted) return;
+        isSubmitted = true;
+        clearInterval(timerInterval);
+
+        const submitBtn = document.getElementById('submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        }
+
+        fetch(SUBMIT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': CSRF_TOKEN,
+            },
+            body: JSON.stringify({ attempt_id: ATTEMPT_ID }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                showResultModal(data);
+                revealAnswers(data.questions);
+                disableAllOptions();
+                // Update timer bar to show submitted
+                timerBar.innerHTML = `
+                    <div class="exam-timer-info">
+                        <span class="exam-timer-label">Completed</span>
+                        <span class="exam-timer-title">{{ exam.title }}</span>
+                    </div>
+                    <div class="exam-timer-badge" style="background:rgba(34,197,94,0.15);color:#22C55E;">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Submitted</span>
+                    </div>`;
+                // Hide submit section
+                document.getElementById('exam-submit-section').style.display = 'none';
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+                isSubmitted = false;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Exam';
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Submit error:', err);
+            alert('Network error. Please try again.');
+            isSubmitted = false;
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Exam';
+            }
+        });
+    }
+
+    /* ── Handle Submit Button ──────────────────────────── */
+    window.handleSubmit = function () {
+        if (isSubmitted) return;
+        const unanswered = TOTAL_Q - answeredSet.size;
+        if (unanswered > 0) {
+            if (!confirm(`You have ${unanswered} unanswered question${unanswered > 1 ? 's' : ''}.\n\nSubmit anyway?`)) return;
+        } else {
+            if (!confirm('Are you sure you want to submit your exam?')) return;
+        }
+        submitExamAjax();
+    };
+
+    /* ── Result Modal ──────────────────────────────────── */
+    function showResultModal(data) {
+        document.getElementById('result-score-num').textContent = data.score;
+        document.getElementById('result-score-den').textContent = '/' + data.total_questions;
+        document.getElementById('result-correct').textContent = data.correct_answers;
+        document.getElementById('result-wrong').textContent = data.wrong_answers;
+        document.getElementById('result-total').textContent = data.total_questions;
+
+        const overlay = document.getElementById('result-modal-overlay');
+        overlay.classList.add('active');
+    }
+
+    window.closeResultModal = function () {
+        const overlay = document.getElementById('result-modal-overlay');
+        overlay.classList.remove('active');
+        // Scroll to first question
+        const firstQ = document.querySelector('.question-card');
+        if (firstQ) firstQ.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    /* ── Answer Reveal ─────────────────────────────────── */
+    function revealAnswers(questions) {
+        questions.forEach(q => {
+            const container = document.getElementById('options-' + q.question_id);
+            if (!container) return;
+
+            container.querySelectorAll('.option-btn').forEach(btn => {
+                const optId = parseInt(btn.dataset.option);
+
+                // Remove previous states
+                btn.classList.remove('selected', 'disabled');
+                btn.dataset.locked = 'true';
+
+                if (optId === q.selected_option_id) {
+                    if (q.is_correct) {
+                        btn.classList.add('correct');
+                        // Update label to ✓
+                        const label = btn.querySelector('.option-label');
+                        if (label) label.textContent = '✓';
+                    } else {
+                        btn.classList.add('wrong');
+                        const label = btn.querySelector('.option-label');
+                        if (label) label.textContent = '✗';
+                    }
+                } else if (optId === q.correct_option_id && !q.is_correct) {
+                    // Show correct answer when student got it wrong
+                    btn.classList.add('correct');
+                    const label = btn.querySelector('.option-label');
+                    if (label) label.textContent = '✓';
+                }
+            });
+
+            // Add indicator to question card
+            const card = document.getElementById('question-card-' + q.question_id);
+            if (card) {
+                const numEl = card.querySelector('.question-number');
+                if (numEl) {
+                    if (q.selected_option_id === null) {
+                        numEl.innerHTML += ' <span class="q-status-badge unanswered">Unanswered</span>';
+                    } else if (q.is_correct) {
+                        numEl.innerHTML += ' <span class="q-status-badge q-correct">✓ Correct</span>';
+                    } else {
+                        numEl.innerHTML += ' <span class="q-status-badge q-wrong">✗ Wrong</span>';
+                    }
+                }
+            }
+        });
+    }
+
+    /* ── Disable All Options ───────────────────────────── */
+    function disableAllOptions() {
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.style.pointerEvents = 'none';
+            btn.dataset.locked = 'true';
+        });
+    }
+
+    /* ── Exit Exam Trap ─────────────────────────────────── */
+    const EXAM_HOME_URL = "{% url 'courses:past_exams' %}";
+    const DELETE_ATTEMPT_URL = "{% url 'courses:delete_attempt' attempt.id %}";
+
+    function resetExamAndLeave(targetUrl) {
+        fetch(DELETE_ATTEMPT_URL, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': CSRF_TOKEN,
+                'Content-Type': 'application/json'
+            }
+        }).finally(() => {
+            window.location.href = targetUrl;
+        });
+    }
+
+    // Trap browser back button
+    history.pushState(null, document.title, location.href);
+    window.addEventListener('popstate', function (event) {
+        if (isSubmitted) {
+            history.back(); // already submitted, let it go back
+            return;
+        }
+        if (confirm("Everything will be reset and R you sure?")) {
+            resetExamAndLeave(EXAM_HOME_URL);
+        } else {
+            // Cancelled - push state again to reset trap
+            history.pushState(null, document.title, location.href);
+        }
+    });
+
+    // Trap all <a> links exiting the page
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (!link) return;
+        
+        // Let submitted state pass normally
+        if (isSubmitted) return;
+        
+        const href = link.getAttribute('href');
+        // Ignore links that don't trigger navigation
+        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+        // Ignore same page clicks
+        if (href === window.location.href || href === window.location.pathname) return;
+        
+        e.preventDefault();
+        if (confirm("Everything will be reset and R you sure?")) {
+            resetExamAndLeave(link.href);
+        }
+    });
+})();
+</script>
+{% endblock %}

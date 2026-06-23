@@ -1,0 +1,57 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Past Classes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}">
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <h1 class="page-title">Past Classes</h1>
+    <p class="page-subtitle">Review all your previous lessons across every subject.</p>
+</header>
+
+{% if lessons %}
+<section class="catalogue-grid" id="catalogue-grid">
+    {% for lesson in lessons %}
+    <div class="card lesson-card animate-fade-in" style="animation-delay: {{ forloop.counter0 }}0ms;"
+        onclick="window.location.href='{% url 'courses:node_detail' lesson.id %}'">
+        <div class="lesson-number">{{ lesson.order|stringformat:"02d" }}</div>
+        <div class="card-tag">{{ lesson.course.title }} - {{ lesson.parent.title|default:"Root" }}</div>
+        <h3 class="card-title">{{ lesson.title }}</h3>
+        <div class="card-subtitle">
+            <i class="fas fa-user-star"></i> 
+            {% for inst in lesson.course.instructors.all %}
+                {{ inst.get_full_name|default:inst.username }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+                Instructor
+            {% endfor %}
+        </div>
+        <p class="card-desc">{{ lesson.description|default:"Click to watch this lesson." }}</p>
+        <div class="card-footer">
+            <div class="card-meta">
+                <span class="meta-item">
+                    <i class="fas fa-play-circle"></i>
+                    {% if lesson.status == 'past_live' %}Past Live
+                    {% elif lesson.status == 'recorded' %}Recorded
+                    {% else %}Review Lesson
+                    {% endif %}
+                </span>
+            </div>
+            <div class="card-action">
+                <i class="fas fa-play"></i>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</section>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon"><i class="fas fa-history"></i></div>
+    <h3>No past classes yet</h3>
+    <p>Lessons will appear here once they are published or recorded.</p>
+</div>
+{% endif %}
+{% endblock %}

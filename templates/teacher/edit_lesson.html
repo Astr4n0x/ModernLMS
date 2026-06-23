@@ -1,0 +1,130 @@
+{% extends "teacher/base_teacher.html" %}
+{% load static %}
+
+{% block title %}Edit Lesson{% endblock %}
+
+{% block content %}
+<section class="module-section active animate-fade-in">
+    <div class="module-header flex-header">
+        <div>
+            <h1>Edit Lesson</h1>
+            <p>Update lesson details or manage attachments for: <strong>{{ lesson.title }}</strong></p>
+        </div>
+        <a href="{% url 'teacher:panel' %}" class="btn-secondary">
+            <i class="ri-arrow-left-line"></i> Back to Panel
+        </a>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}" style="margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: 8px; {% if message.tags == 'error' %}background:#fee2e2;color:#991b1b;border:1px solid #fca5a5{% else %}background:#d1fae5;color:#065f46;border:1px solid #6ee7b7{% endif %}">
+        <i class="ri-{% if message.tags == 'error' %}error-warning{% else %}checkbox-circle{% endif %}-line"></i> {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="form-card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1rem;">Lesson Details</h3>
+        <form method="POST" action="{% url 'teacher:edit_lesson' lesson.id %}" novalidate>
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="edit-title">Lesson Title <span class="required">*</span></label>
+                    <input type="text" id="edit-title" name="title" value="{{ lesson.title }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-link">YouTube Unlisted Link <span class="required">*</span></label>
+                    <input type="url" id="edit-link" name="youtube_url" value="{{ lesson.youtube_url }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-desc">Lesson Description</label>
+                <textarea id="edit-desc" name="description" rows="4">{{ lesson.description }}</textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <i class="ri-save-line"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="form-card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1rem;">Current Attachments</h3>
+        {% if lesson.attachments.all %}
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for att in lesson.attachments.all %}
+                    <tr>
+                        <td>{{ att.name }}</td>
+                        <td><span class="status-badge" style="background:#e8f0e6;color:#3d5c38">{{ att.get_file_type_display }}</span></td>
+                        <td>
+                            <form method="POST" action="{% url 'teacher:delete_attachment' att.id %}" onsubmit="return confirm('Delete this attachment?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-action delete" title="Delete Attachment"><i class="ri-delete-bin-line"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No attachments added to this lesson.</p>
+        {% endif %}
+    </div>
+
+    <div class="form-card">
+        <h3 style="margin-bottom: 1rem;">Add New Attachment</h3>
+        <form method="POST" action="{% url 'teacher:add_attachment' lesson.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="att-name">Attachment Name <span class="required">*</span></label>
+                    <input type="text" id="att-name" name="name" placeholder="e.g. Chapter 3 Slides" required>
+                </div>
+                <div class="form-group">
+                    <label for="att-type">File Type</label>
+                    <div class="select-wrapper">
+                        <select id="att-type" name="file_type">
+                            <option value="pdf">PDF</option>
+                            <option value="slide">Slide</option>
+                            <option value="note">Note</option>
+                            <option value="link">External Link</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <i class="ri-arrow-down-s-line select-icon"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="att-file">Upload File</label>
+                    <input type="file" id="att-file" name="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.zip">
+                </div>
+                <div class="form-group">
+                    <label for="att-url">Or External URL</label>
+                    <input type="url" id="att-url" name="external_url" placeholder="https://example.com/slides">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <i class="ri-attachment-line"></i> Add Attachment
+                </button>
+            </div>
+        </form>
+    </div>
+
+</section>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Board Questions{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}?v=2">
+<style>
+    .filter-section {
+        display: flex;
+        gap: 1.5rem;
+        background-color: var(--bg-surface);
+        padding: 1.5rem;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        transition: opacity var(--transition-normal);
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .filter-select {
+        width: 100%;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 0.75rem 1rem;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        font-family: inherit;
+        cursor: pointer;
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+</style>
+{% endblock %}
+
+{% block page_heading %}Board Questions{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <h1 class="page-title">Board Questions</h1>
+    <p class="page-subtitle">Access previous years' official board questions filtered by board name, year, and type.</p>
+</header>
+
+<div class="filter-section animate-fade-in">
+    <div class="filter-group">
+        <label for="board-filter" class="filter-label">Board Name</label>
+        <select id="board-filter" class="filter-select">
+            <option value="all">All Boards</option>
+            {% for board in boards %}
+            <option value="{{ board }}">{{ board }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-group">
+        <label for="year-filter" class="filter-label">Exam Year</label>
+        <select id="year-filter" class="filter-select">
+            <option value="all">All Years</option>
+            {% for yr in years %}
+            <option value="{{ yr }}">{{ yr }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-group">
+        <label for="type-filter" class="filter-label">Exam Type</label>
+        <select id="type-filter" class="filter-select">
+            <option value="all">All Types</option>
+            {% for ty in types %}
+            <option value="{{ ty }}">{{ ty }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<div id="catalogue-content">
+    <!-- Dynamic Cards Rendered Here -->
+</div>
+
+<!-- Include JSON Data -->
+{{ board_questions_json|json_script:"board-questions-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const dataElement = document.getElementById('board-questions-data');
+        if (!dataElement) return;
+
+        let boardQuestions = [];
+        try {
+            boardQuestions = JSON.parse(dataElement.textContent);
+        } catch (e) {
+            console.error("Could not parse board questions data");
+            return;
+        }
+
+        const boardFilter = document.getElementById('board-filter');
+        const yearFilter = document.getElementById('year-filter');
+        const typeFilter = document.getElementById('type-filter');
+        const contentArea = document.getElementById('catalogue-content');
+
+        function renderQuestions() {
+            const selectedBoard = boardFilter.value;
+            const selectedYear = yearFilter.value;
+            const selectedType = typeFilter.value;
+
+            let filtered = boardQuestions;
+
+            if (selectedBoard !== 'all') {
+                filtered = filtered.filter(q => q.board_name === selectedBoard);
+            }
+            if (selectedYear !== 'all') {
+                filtered = filtered.filter(q => q.year.toString() === selectedYear);
+            }
+            if (selectedType !== 'all') {
+                filtered = filtered.filter(q => q.exam_type === selectedType);
+            }
+
+            if (filtered.length === 0) {
+                contentArea.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-graduation-cap"></i></div>
+                        <h3>No Board Questions Found</h3>
+                        <p>No questions match your current filter selections. Try adjusting the filters.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<section class="catalogue-grid">';
+            filtered.forEach((q, index) => {
+                const detailUrl = `/board-questions/${q.id}/`;
+                html += `
+                    <div class="card lesson-card animate-fade-in" style="animation-delay: ${index * 30}ms;" onclick="window.location.href='${detailUrl}'">
+                        <div class="lesson-number">${q.year}</div>
+                        <div class="card-tag">${q.board_name} Board</div>
+                        <h3 class="card-title">${q.title}</h3>
+                        <div class="card-subtitle">
+                            <i class="fas fa-file-pdf"></i> PDF Question Paper
+                        </div>
+                        <p class="card-desc">Practice and solve the official ${q.board_name} Board ${q.exam_type} question from the year ${q.year}.</p>
+                        <div class="card-footer">
+                            <div class="card-meta">
+                                <span class="meta-item">
+                                    <i class="fas fa-file-alt"></i> ${q.exam_type}
+                                </span>
+                            </div>
+                            <div class="card-action">
+                                <i class="fas fa-book-open"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</section>';
+            contentArea.innerHTML = html;
+        }
+
+        boardFilter.addEventListener('change', renderQuestions);
+        yearFilter.addEventListener('change', renderQuestions);
+        typeFilter.addEventListener('change', renderQuestions);
+
+        // Initial Render
+        renderQuestions();
+    });
+</script>
+{% endblock %}

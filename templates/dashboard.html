@@ -1,0 +1,156 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="welcome-card">
+    <h1>Welcome back, {{ user.get_full_name|default:user.username }}! 👋</h1>
+    <p>Here's your learning overview. Explore courses, revisit past classes, or join a live session.</p>
+</div>
+
+<!-- Stats Row -->
+<div class="dashboard-grid">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-book-open"></i></div>
+        <div class="stat-info">
+            <h3>Enrolled Courses</h3>
+            <p>{{ total_courses }}</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background-color: #d1fae5; color: #10b981;"><i class="fas fa-play-circle"></i>
+        </div>
+        <div class="stat-info">
+            <h3>Total Lessons</h3>
+            <p>{{ total_lessons }}</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background-color: #fef3c7; color: #f59e0b;"><i class="fas fa-history"></i></div>
+        <div class="stat-info">
+            <h3>Past Classes</h3>
+            <p>{{ past_lessons }}</p>
+        </div>
+    </div>
+    <!-- Streak Stat Card -->
+    <a href="{% url 'courses:streak_profile' %}" style="text-decoration:none;">
+        <div class="stat-card streak-stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #fff3e0, #ffe0b2); color: #f97316; font-size: 1.4rem; min-width:48px; width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:12px;">
+                🔥
+            </div>
+            <div class="stat-info">
+                <h3>Current Streak</h3>
+                <p style="color: #f97316;">{{ streak_count }} <span style="font-size:0.8rem; font-weight:500; color: var(--text-secondary);">days</span></p>
+            </div>
+        </div>
+    </a>
+</div>
+
+<!-- Streak Progress Card -->
+<div class="streak-dashboard-card">
+    <div class="streak-dashboard-header">
+        <div style="display:flex; align-items:center; gap: 0.75rem;">
+            <div class="streak-flame-icon">🔥</div>
+            <div>
+                <h3 style="margin:0; font-size:1.05rem; color: var(--text-primary);">Learning Streak</h3>
+                <p style="margin:0; font-size:0.82rem; color: var(--text-secondary);">Complete a lesson or exam every day to keep your streak alive!</p>
+            </div>
+        </div>
+        <a href="{% url 'courses:streak_profile' %}" class="streak-view-all-btn">View All Badges →</a>
+    </div>
+
+    <div class="streak-stats-row">
+        <div class="streak-stat-item">
+            <span class="streak-stat-num" style="color: #f97316;">{{ streak_count }}</span>
+            <span class="streak-stat-label">Current Streak</span>
+        </div>
+        <div class="streak-stat-divider"></div>
+        <div class="streak-stat-item">
+            <span class="streak-stat-num" style="color: #8b5cf6;">{{ longest_streak }}</span>
+            <span class="streak-stat-label">Best Streak</span>
+        </div>
+        <div class="streak-stat-divider"></div>
+        <div class="streak-stat-item">
+            <span class="streak-stat-num" style="color: #10b981;">{{ earned_badges|length }}</span>
+            <span class="streak-stat-label">Badges Earned</span>
+        </div>
+        {% if next_badge %}
+        <div class="streak-stat-divider"></div>
+        <div class="streak-stat-item" style="flex:2; align-items:flex-start; gap:0.4rem;">
+            <span class="streak-stat-label" style="font-size:0.78rem;">Next: {{ next_badge.name }}</span>
+            <div class="streak-progress-bar-wrap">
+                <div class="streak-progress-bar-fill" style="width: {{ streak_count|floatformat:0 }}{% widthratio streak_count next_badge.days 100 %}%;"></div>
+            </div>
+            <span style="font-size:0.72rem; color: var(--text-secondary);">{{ next_badge.remaining }} more day{{ next_badge.remaining|pluralize }} to go</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Earned Badges (Preview — latest 8) -->
+    {% if earned_badges %}
+    <div class="dashboard-badges-grid">
+        {% for badge in earned_badges|slice:":8" %}
+        <div class="dashboard-badge-chip earned" title="{{ badge.name }} — {{ badge.days_required }}-day streak">
+            <span class="badge-emoji">{{ badge.name|slice:":2" }}</span>
+            <span class="badge-chip-label">{{ badge.name|slice:"3:" }}</span>
+        </div>
+        {% endfor %}
+        {% if earned_badges|length > 8 %}
+        <a href="{% url 'courses:streak_profile' %}" class="dashboard-badge-chip more-badge">
+            +{{ earned_badges|length|add:"-8" }} more
+        </a>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="streak-empty-badges">
+        <span style="font-size:2rem;">🌱</span>
+        <p>Complete lessons & exams daily to earn your first badge at <strong>3-day streak</strong>!</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Enrolled Courses -->
+<div style="margin-top: 2rem; background: var(--bg-card); padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.1rem; margin: 0;">Enrolled Courses</h3>
+        <a href="{% url 'courses:course_store' %}" class="btn btn-outline" style="padding: 0.4rem 1rem; font-size: 0.9rem; text-decoration: none; border: 1px solid var(--primary-color); border-radius: 8px; color: var(--primary-color);">Browse Courses</a>
+    </div>
+    {% if courses %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem;">
+        {% for course in courses %}
+        <a href="{% url 'courses:catalogue' %}" style="text-decoration:none;">
+            <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; cursor: pointer; transition: all 0.2s;"
+                onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-md)'"
+                onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <div
+                    style="font-size:0.75rem; font-weight:600; color: var(--primary-color); background: var(--primary-light); display:inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; margin-bottom: 0.5rem; text-transform:uppercase; letter-spacing: 0.05em;">
+                    {{ course.class_level.name|default:"General" }}
+                </div>
+                <div style="font-weight: 600; font-size:1rem; color: var(--text-primary); margin-bottom: 0.25rem;">{{ course.title }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                    <i class="fas fa-user-tie"></i>
+                    {% if course.instructors.all %}
+                        {% for inst in course.instructors.all %}
+                            {{ inst.get_full_name|default:inst.username }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    {% else %}
+                    Staff
+                    {% endif %}
+                </div>
+                <div
+                    style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-secondary); display: flex; gap: 1rem;">
+                    <span><i class="fas fa-book" style="color: var(--primary-color);"></i> {{ course.total_subjects }}
+                        Subjects</span>
+                    <span><i class="fas fa-play" style="color: var(--primary-color);"></i> {{ course.total_lessons }}
+                        Lessons</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="color: var(--text-secondary);">No courses available yet. Please check back later.</p>
+    {% endif %}
+</div>
+{% endblock %}

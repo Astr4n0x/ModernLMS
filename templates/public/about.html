@@ -1,0 +1,88 @@
+{% extends "public/base_public.html" %}
+
+{% block title %}About Us | Fahad's Tutorial - FT{% endblock %}
+
+{% block content %}
+<!-- About Hero Section -->
+<section style="background: linear-gradient(135deg, #778873 0%, #5f6e5c 100%); color: white; padding: 6rem 1.5rem; text-align: center; position: relative; overflow: hidden;">
+    <!-- Decorative background elements -->
+    <div style="position: absolute; top: -50px; left: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+    <div style="position: absolute; bottom: -100px; right: -50px; width: 300px; height: 300px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+    
+    <div style="max-width: 900px; margin: 0 auto; position: relative; z-index: 10;">
+        <span style="display: inline-block; padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.2); border-radius: 2rem; font-weight: 700; font-size: 0.9rem; margin-bottom: 1.5rem; letter-spacing: 1px;">#SmartEducation Starts Here</span>
+        <h1 style="font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.2;">Welcome to Fahad's Tutorial - FT</h1>
+        <p style="font-size: 1.25rem; color: #e8f0e6; line-height: 1.8; max-width: 800px; margin: 0 auto;">As a premier "School of Digital Education" and one of Bangladesh's leading Online Education Platforms, FT is dedicated to nurturing the smart citizens of our country and beyond.</p>
+    </div>
+</section>
+
+<!-- Our Story & Vision Section -->
+<section style="padding: 5rem 1.5rem; background: #f8fafc;">
+    <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;" class="about-grid">
+        <div>
+            <h2 style="font-size: 2.25rem; font-weight: 800; color: #1e3a8a; margin-bottom: 1.5rem;">Our Story & Vision</h2>
+            <p style="font-size: 1.05rem; color: #475569; line-height: 1.8; margin-bottom: 1.5rem;">
+                Established in 2019, FT is registered as a proprietorship venture under the stewardship of Md. Fahad Hossain. Led by our CEO and a dedicated management team, we tirelessly work towards realizing the Vision 2041 of our nation, with a special focus on transforming the education sector into a hub of innovation and excellence.
+            </p>
+            <p style="font-size: 1.05rem; color: #475569; line-height: 1.8;">
+                Our team of professional and experienced teachers is committed to providing comprehensive academic and professional support through online courses and personalized offline programs. Whether it's general education, technical skills, soft skills, or knowledge building, FT offers tailored courses to meet the diverse needs of students, parents, teachers, and professionals both domestically and internationally.
+            </p>
+        </div>
+        <div style="position: relative;">
+            <div style="background: #e8f0e6; border-radius: 1rem; position: absolute; top: -1.5rem; right: -1.5rem; bottom: -1.5rem; left: 1.5rem; z-index: 0;"></div>
+            <!-- Placeholder for a beautiful office or student image. If an asset is provided later, this will hold it. -->
+            <div style="background: white; border-radius: 1rem; overflow: hidden; position: relative; z-index: 1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; aspect-ratio: 4/3; border: 1px solid #e2e8f0;">
+                <i class="ri-rocket-fill" style="font-size: 5rem; color: #3b82f6;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Leadership & Mission Section -->
+<section style="padding: 5rem 1.5rem; background: white;">
+    <div style="max-width: 1000px; margin: 0 auto; text-align: center;">
+        <i class="ri-double-quotes-l" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem; display: inline-block;"></i>
+        <h2 style="font-size: 2.25rem; font-weight: 800; color: #1e3a8a; margin-bottom: 2rem;">Visionary Leadership</h2>
+        <p style="font-size: 1.15rem; color: #334155; line-height: 1.9; margin-bottom: 2rem; font-style: italic;">
+            "Under the visionary leadership of Mr. Fahad Hossain, FT has made significant strides in positively impacting the education sector. We firmly believe that our meaningful contributions have played a pivotal role in shaping the future of education, and we are committed to continuing this journey with dedication and enthusiasm."
+        </p>
+        <p style="font-size: 1.05rem; color: #475569; line-height: 1.8;">
+            With a team of mentors, teachers, and staff fully dedicated to our mission, we are confident in our ability to realize our aspirations and elevate Fahad's Tutorial – FT to new heights within the global education landscape.
+        </p>
+        <div style="margin-top: 2rem; font-weight: 800; color: #5f6e5c; font-size: 1.2rem;">
+            #SmartEducation starts here at Fahad's Tutorial – FT!
+        </div>
+    </div>
+</section>
+
+<!-- Our Expert Teachers -->
+<section style="padding: 5rem 1.5rem; background: #eef2ff;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="font-size: 2.25rem; font-weight: 800; color: #1e3a8a; margin-bottom: 1rem;">Meet Our Expert Teachers</h2>
+            <p style="font-size: 1.1rem; color: #475569;">Learn from the brightest minds dedicated to your success.</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2.5rem;">
+            {% for teacher in team %}
+            <div style="background: white; border-radius: 1rem; padding: 2.5rem 1.5rem; text-align: center; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transition: transform 0.3s; border-bottom: 4px solid #3b82f6;" onmouseover="this.style.transform='translateY(-10px)'" onmouseout="this.style.transform='translateY(0)'">
+                <img src="{{ teacher.profile_photo.url }}" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 1.5rem; border: 4px solid #dbeafe; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem;">{{ teacher.get_full_name }}</h3>
+                <p style="color: #2563eb; font-weight: 600; font-size: 0.95rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">{{ teacher.experience }}</p>
+                <p style="font-size: 0.95rem; color: #64748b; line-height: 1.6;">{{ teacher.bio|truncatewords:20 }}</p>
+            </div>
+            {% empty %}
+            <div style="grid-column: 1/-1; text-align: center; color: #64748b; background: white; padding: 3rem; border-radius: 1rem; border: 1px dashed #cbd5e1;">
+                <i class="ri-user-star-line" style="font-size: 3rem; color: #94a3b8; margin-bottom: 1rem; display: block;"></i>
+                Teacher profiles are currently being updated.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<style>
+@media (max-width: 768px) {
+    .about-grid { grid-template-columns: 1fr !important; gap: 2.5rem !important; }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,748 @@
+{% extends 'base_student.html' %}
+{% load static %}
+
+{% block title %}Academic Results{% endblock %}
+
+{% block page_heading %}Academic Results{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Premium Academic Results Layout */
+    .results-layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    /* Left Side: Results & Details */
+    .results-main-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .welcome-info-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 3rem 2rem;
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+    }
+
+    .welcome-info-card .icon-wrapper {
+        width: 80px;
+        height: 80px;
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+    }
+
+    .welcome-info-card h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .welcome-info-card p {
+        color: var(--text-secondary);
+        max-width: 450px;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .demo-badge-hint {
+        background-color: var(--bg-main);
+        border: 1px dashed var(--primary-color);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .demo-badge-hint:hover {
+        background-color: var(--primary-light);
+        border-style: solid;
+        color: var(--primary-color);
+    }
+
+    /* Status Card: Not Published Yet */
+    .not-published-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 4rem 2rem;
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .not-published-card .icon-wrapper {
+        width: 90px;
+        height: 90px;
+        background-color: #fef3c7;
+        /* Amber 100 */
+        color: #d97706;
+        /* Amber 600 */
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.8rem;
+        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.1);
+    }
+
+    .not-published-card h3 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .not-published-card p {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        max-width: 400px;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* Student Info Summary */
+    .student-summary-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .student-summary-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px;
+        height: 100%;
+        background-color: var(--primary-color);
+    }
+
+    .summary-info-item h4 {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .summary-info-item p {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .gpa-badge-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background-color: var(--bg-main);
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        justify-self: end;
+    }
+
+    .gpa-circle {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), #A1BC98);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+    }
+
+    .gpa-details h5 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .gpa-details p {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    /* Result Table Styling */
+    .report-card-container {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .report-card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background-color: var(--bg-main);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .report-card-header h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .report-card-header h3 i {
+        color: var(--primary-color);
+    }
+
+    .badge-status {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .badge-status.passed {
+        background-color: #dcfce7;
+        color: #15803d;
+    }
+
+    .results-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.95rem;
+    }
+
+    .results-table th {
+        background-color: var(--bg-card);
+        color: var(--text-secondary);
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .results-table td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .results-table tbody tr:hover {
+        background-color: var(--bg-main);
+    }
+
+    .results-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .results-table td.subject-name {
+        font-weight: 600;
+    }
+
+    .grade-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        min-width: 42px;
+        text-align: center;
+    }
+
+    .grade-badge.aplus {
+        background-color: #dcfce7;
+        color: #15803d;
+    }
+
+    .grade-badge.a {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .grade-badge.aminus {
+        background-color: #f0f9ff;
+        color: #0284c7;
+    }
+
+    .grade-badge.b {
+        background-color: #f3e8ff;
+        color: #6b21a8;
+    }
+
+    .grade-badge.c {
+        background-color: #ffedd5;
+        color: #c2410c;
+    }
+
+    .grade-badge.d {
+        background-color: #fef3c7;
+        color: #b45309;
+    }
+
+    .grade-badge.f {
+        background-color: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .null-marker {
+        color: var(--text-tertiary);
+        font-weight: 300;
+    }
+
+    /* Right Side: Search Form Card */
+    .search-panel-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        position: sticky;
+        top: 2rem;
+    }
+
+    .search-panel-card h4 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .search-panel-card h4 i {
+        color: var(--primary-color);
+    }
+
+    /* Tabs Design */
+    .exam-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        background-color: var(--bg-main);
+        padding: 4px;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+    }
+
+    .exam-tab-btn {
+        background: none;
+        border: none;
+        padding: 8px 4px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .exam-tab-btn:hover {
+        color: var(--text-primary);
+    }
+
+    .exam-tab-btn.active {
+        background-color: var(--bg-card);
+        color: var(--primary-color);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* Option Form Wrappers */
+    .option-form-wrapper {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .option-form-wrapper.active {
+        display: block;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .form-group input::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    .form-group input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .btn-submit {
+        width: 100%;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+    }
+
+    .btn-submit:hover {
+        background-color: var(--primary-hover);
+        box-shadow: 0 6px 14px rgba(79, 70, 229, 0.3);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive Grid */
+    @media (max-width: 992px) {
+        .results-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .search-panel-card {
+            position: static;
+            order: -1;
+            /* place form at the top on mobile so users see it first */
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-layout">
+    <!-- Left Side: Result Table / Status -->
+    <div class="results-main-section">
+        {% if not searched %}
+        <!-- Welcome Waiting State -->
+        <div class="welcome-info-card">
+            <div class="icon-wrapper">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>Academic Results Search</h3>
+            <p>Select an exam type on the search panel, enter the Student UID and Registration Number to view the grade
+                sheet.</p>
+
+            <div class="demo-badge-hint" onclick="fillDemoCredentials()">
+                <i class="fas fa-lightbulb" style="color: #ea580c;"></i>
+                <span><strong>Demo Available:</strong> Click to auto-fill search for Farhan Tanvir (UID/Reg:
+                    86957399)</span>
+            </div>
+        </div>
+
+        {% elif not_published %}
+        <!-- Result Not Published State -->
+        <div class="not-published-card">
+            <div class="icon-wrapper">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h3>Not published yet</h3>
+            <p>The academic results for the selected examination session ({{ exam_type|title }}) have not been published
+                yet or the searched credentials do not exist.</p>
+        </div>
+
+        {% elif result_data %}
+        <!-- Result Displayed State -->
+        <!-- Student Header Profile Summary -->
+        <div class="student-summary-card">
+            <div class="summary-info-item">
+                <h4>Student Name</h4>
+                <p>{{ result_data.student_name }}</p>
+            </div>
+            <div class="summary-info-item">
+                <h4>Student UID / Reg</h4>
+                <p>{{ result_data.uid }} / {{ result_data.reg }}</p>
+            </div>
+            <div class="summary-info-item">
+                <h4>Class & Exam</h4>
+                <p>{{ result_data.class_level }} • {{ result_data.exam_title }}</p>
+            </div>
+            <div class="gpa-badge-container">
+                <div class="gpa-circle">
+                    <span>{{ result_data.grade }}</span>
+                </div>
+                <div class="gpa-details">
+                    <h5>Overall Result</h5>
+                    <p>GPA {{ result_data.gpa }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grade Report Card Table -->
+        <div class="report-card-container">
+            <div class="report-card-header">
+                <h3><i class="fas fa-file-signature"></i> Academic Transcript</h3>
+                <span class="badge-status passed">{{ result_data.status }}</span>
+            </div>
+            <div class="results-table-wrapper">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Subject Name</th>
+                            <th>MCQ Mark</th>
+                            <th>CQ (Written) Mark</th>
+                            <th>Practical Mark</th>
+                            <th>Total</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in result_data.subjects %}
+                        <tr>
+                            <td class="subject-name">{{ subject.name }}</td>
+                            <td>
+                                {% if subject.mcq is not none %}
+                                {{ subject.mcq }}
+                                {% else %}
+                                <span class="null-marker">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if subject.cq is not none %}
+                                {{ subject.cq }}
+                                {% else %}
+                                <span class="null-marker">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if subject.practical is not none %}
+                                {{ subject.practical }}
+                                {% else %}
+                                <span class="null-marker">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-weight: 600;">{{ subject.total }}</td>
+                            <td>
+                                <span
+                                    class="grade-badge {% if subject.grade == 'A+' %}aplus{% elif subject.grade == 'A' %}a{% elif subject.grade == 'A-' %}aminus{% elif subject.grade == 'B' %}b{% elif subject.grade == 'C' %}c{% elif subject.grade == 'D' %}d{% else %}f{% endif %}">
+                                    {{ subject.grade }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Side: Sticky Search Form Panel (Top Right Corner Area) -->
+    <div class="search-panel-card">
+        <h4><i class="fas fa-filter"></i> Search Criteria</h4>
+
+        <!-- Tab Options -->
+        <div class="exam-tabs">
+            <button type="button" class="exam-tab-btn" id="tab-tutorial"
+                onclick="switchOption('tutorial')">Tutorial</button>
+            <button type="button" class="exam-tab-btn" id="tab-half_yearly" onclick="switchOption('half_yearly')">Half
+                Yearly</button>
+            <button type="button" class="exam-tab-btn" id="tab-yearly" onclick="switchOption('yearly')">Yearly</button>
+        </div>
+
+        <!-- Forms for Each Option -->
+        <!-- Tutorial Form -->
+        <div class="option-form-wrapper" id="form-tutorial">
+            <form method="GET" action="">
+                <input type="hidden" name="exam_type" value="tutorial">
+                <div class="form-group">
+                    <label for="uid-tutorial">Student UID</label>
+                    <input type="text" id="uid-tutorial" name="uid"
+                        value="{% if exam_type == 'tutorial' %}{{ uid }}{% endif %}" placeholder="e.g. 86957399"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-tutorial">Registration Number</label>
+                    <input type="text" id="reg-tutorial" name="reg"
+                        value="{% if exam_type == 'tutorial' %}{{ reg }}{% endif %}" placeholder="e.g. 86957399"
+                        required>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-search"></i> Get Result
+                </button>
+            </form>
+        </div>
+
+        <!-- Half Yearly Form -->
+        <div class="option-form-wrapper" id="form-half_yearly">
+            <form method="GET" action="">
+                <input type="hidden" name="exam_type" value="half_yearly">
+                <div class="form-group">
+                    <label for="uid-half_yearly">Student UID</label>
+                    <input type="text" id="uid-half_yearly" name="uid"
+                        value="{% if exam_type == 'half_yearly' %}{{ uid }}{% endif %}" placeholder="e.g. 86957399"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-half_yearly">Registration Number</label>
+                    <input type="text" id="reg-half_yearly" name="reg"
+                        value="{% if exam_type == 'half_yearly' %}{{ reg }}{% endif %}" placeholder="e.g. 86957399"
+                        required>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-search"></i> Get Result
+                </button>
+            </form>
+        </div>
+
+        <!-- Yearly Form -->
+        <div class="option-form-wrapper" id="form-yearly">
+            <form method="GET" action="">
+                <input type="hidden" name="exam_type" value="yearly">
+                <div class="form-group">
+                    <label for="uid-yearly">Student UID</label>
+                    <input type="text" id="uid-yearly" name="uid"
+                        value="{% if exam_type == 'yearly' %}{{ uid }}{% endif %}" placeholder="e.g. 86957399" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-yearly">Registration Number</label>
+                    <input type="text" id="reg-yearly" name="reg"
+                        value="{% if exam_type == 'yearly' %}{{ reg }}{% endif %}" placeholder="e.g. 86957399" required>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-search"></i> Get Result
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchOption(option) {
+        // Deactivate all tabs and form wrappers
+        document.querySelectorAll('.exam-tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.option-form-wrapper').forEach(wrapper => wrapper.classList.remove('active'));
+
+        // Activate selected tab and wrapper
+        const activeTab = document.getElementById(`tab-${option}`);
+        const activeForm = document.getElementById(`form-${option}`);
+
+        if (activeTab && activeForm) {
+            activeTab.classList.add('active');
+            activeForm.classList.add('active');
+        }
+    }
+
+    function fillDemoCredentials() {
+        // Automatically switch to tutorial tab and fill dummy credentials
+        switchOption('tutorial');
+
+        const uidInput = document.getElementById('uid-tutorial');
+        const regInput = document.getElementById('reg-tutorial');
+
+        if (uidInput && regInput) {
+            uidInput.value = '86957399';
+            regInput.value = '86957399';
+
+            // Add subtle pulse feedback
+            uidInput.style.transform = 'scale(1.03)';
+            regInput.style.transform = 'scale(1.03)';
+            setTimeout(() => {
+                uidInput.style.transform = 'scale(1)';
+                regInput.style.transform = 'scale(1)';
+            }, 300);
+        }
+    }
+
+    // Set initial active tab on page load based on current search
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentExamType = "{{ exam_type|default:'tutorial' }}";
+        switchOption(currentExamType);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,760 @@
+{% extends "teacher/base_teacher.html" %}
+{% load static %}
+
+{% block title %}Teacher Admin Panel{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div style="margin-bottom: 2rem;">
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}" style="margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: 8px; {% if message.tags == 'error' %}background:#fee2e2;color:#991b1b;border:1px solid #fca5a5{% else %}background:#d1fae5;color:#065f46;border:1px solid #6ee7b7{% endif %}">
+        <i class="ri-{% if message.tags == 'error' %}error-warning{% else %}checkbox-circle{% endif %}-line"></i> {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- 1. Content Builder -->
+<section id="content-builder-module" class="module-section {% if active_section == 'content-builder-module' %}active animate-fade-in{% else %}hidden{% endif %}">
+    <div class="module-header">
+        <h1>Content Builder</h1>
+        <p>Manage course structure, topics, and lessons dynamically.</p>
+    </div>
+
+    <div class="form-card" style="margin-bottom: 2rem;">
+        <div class="form-group">
+            <label>Select Course to Manage <span class="required">*</span></label>
+            <div class="select-wrapper">
+                <select id="builder-course-select" required style="width:100%; padding:0.75rem; border:1px solid var(--border-color); border-radius:8px;">
+                    <option value="" disabled selected>Choose a course</option>
+                    {% for c in courses %}
+                    <option value="{{ c.id }}">{{ c.title }}</option>
+                    {% endfor %}
+                </select>
+                <i class="ri-arrow-down-s-line select-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2-Panel Layout (Hidden until course selected) -->
+    <div id="builder-workspace" style="display: none; gap: 2rem; align-items: flex-start;">
+        <!-- Left Panel: Tree -->
+        <div class="tree-panel form-card" style="flex: 1; min-height: 400px; max-height: 700px; overflow-y: auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                <h3 style="margin:0;">Course Structure</h3>
+                <button type="button" class="btn-secondary btn-sm" id="btn-add-root-node" style="padding:0.4rem 0.8rem; font-size:0.875rem;">
+                    <i class="ri-add-line"></i> Root Node
+                </button>
+            </div>
+            <div id="content-tree-container" class="content-tree">
+                <!-- JS will render the tree here -->
+            </div>
+        </div>
+
+        <div class="editor-panel form-card" style="flex: 1; position: sticky; top: 1rem;">
+            <h3 id="editor-title" style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">Editor</h3>
+            
+            <form id="node-editor-form" autocomplete="off" style="display: none;" enctype="multipart/form-data">
+                <input type="hidden" id="node-id" name="id">
+                <input type="hidden" id="node-parent-id" name="parent_id">
+                
+                <div class="form-group">
+                    <label>Title <span class="required">*</span></label>
+                    <input type="text" id="node-title" name="title" required placeholder="Node Title">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type <span class="required">*</span></label>
+                        <select id="node-type" name="node_type" required style="width:100%; padding:0.75rem; border:1px solid var(--border-color); border-radius:6px; font-size:1rem;">
+                            <option value="subject">Subject / Section</option>
+                            <option value="topic">Topic / Chapter</option>
+                            <option value="class">Class / Lesson</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Order</label>
+                        <input type="number" id="node-order" name="order" value="1" min="1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" id="class-mode-group" style="display: none;">
+                        <label>Live or Recorded? <span class="required">*</span></label>
+                        <select id="node-class-mode" name="class_mode" style="width:100%; padding:0.75rem; border:1px solid var(--border-color); border-radius:6px; font-size:1rem;">
+                            <option value="recorded">Recorded Class (Comments Off)</option>
+                            <option value="live">Live Class (Comments On)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" id="youtube-url-group" style="display: none;">
+                    <label>YouTube Link <span class="required">*</span></label>
+                    <input type="url" id="node-youtube-url" name="youtube_url" placeholder="https://youtube.com/watch?v=...">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="node-description" name="description" rows="3"></textarea>
+                </div>
+
+                <div class="attachments-section" id="attachment-section" style="display: none; margin-top: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom:1px solid #e2e8f0; padding-bottom:0.5rem;">
+                        <h4 style="margin:0; font-size:1rem; color:var(--text-primary);">Attachments</h4>
+                        <button type="button" class="btn-secondary btn-sm" id="add-attachment-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem;">
+                            <i class="ri-attachment-line"></i> Add
+                        </button>
+                    </div>
+                    <div id="attachments-container"></div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 1.5rem; justify-content: space-between; display: flex;">
+                    <div>
+                        <button type="button" id="btn-delete-node" class="btn-primary" style="background:#ef4444; border:none; display:none;"><i class="ri-delete-bin-line"></i> Delete</button>
+                    </div>
+                    <div style="margin-left:auto; display:flex; gap:0.5rem;">
+                        <button type="button" id="btn-add-child" class="btn-primary" style="background:#10b981; border:none; display:none;"><i class="ri-add-circle-line"></i> Add Child</button>
+                        <button type="button" id="btn-cancel-edit" class="btn-secondary">Cancel</button>
+                        <button type="submit" id="btn-save-node" class="btn-primary"><i class="ri-save-line"></i> Save Node</button>
+                    </div>
+                </div>
+            </form>
+            <div id="editor-empty-state" style="text-align: center; color: var(--text-secondary); padding: 4rem 1rem;">
+                <i class="ri-node-tree" style="font-size: 4rem; margin-bottom: 1rem; color: #e2e8f0; display:block;"></i>
+                <p style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--text-primary);">Select a node to edit</p>
+                <p style="font-size: 0.875rem;">Click on a node in the tree to edit its details or add child nodes.</p>
+            </div>
+
+            <!-- ── Import from Existing Course Button (always visible once course is chosen) ── -->
+            <div style="border-top: 1px solid var(--border-color); margin-top: 1.5rem; padding-top: 1.2rem; text-align: center;">
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                    <i class="ri-information-line"></i>
+                    Reuse content from any existing course
+                </p>
+                <button type="button" id="btn-import-content"
+                    style="display: inline-flex; align-items: center; gap: 0.5rem;
+                           padding: 0.65rem 1.25rem; border-radius: 8px;
+                           background: linear-gradient(135deg, #778873, #5f6e5c);
+                           color: #fff; border: none; cursor: pointer;
+                           font-size: 0.9rem; font-weight: 600;
+                           box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+                           transition: opacity 0.2s, transform 0.15s;">
+                    <i class="ri-download-cloud-2-line" style="font-size:1.1rem;"></i>
+                    Import from Existing Course
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 3. Live Classes -->
+<section id="live-module" class="module-section {% if active_section == 'live-module' %}active animate-fade-in{% else %}hidden{% endif %}">
+    <div class="module-header flex-header" id="live-header">
+        <div>
+            <h1>Live Classes Integration</h1>
+            <p>Start and monitor ongoing live sessions.</p>
+        </div>
+        <button class="btn-secondary hidden" id="back-to-live-list"><i class="ri-arrow-left-line"></i> Back</button>
+    </div>
+
+    <div id="live-list-view" class="live-grid">
+        {% if live_sessions %}
+            {% for session in live_sessions %}
+            <div class="live-card" data-session-id="{{ session.id }}" data-node-id="{{ session.content_node.id }}" data-title="{{ session.content_node.title }}" data-youtube-url="{{ session.content_node.get_youtube_embed_url }}">
+                <div class="live-card-thumb">
+                    <span class="live-indicator"><span class="pulse"></span> LIVE</span>
+                    <i class="ri-live-line" style="font-size: 3rem; color: rgba(255,255,255,0.5);"></i>
+                </div>
+                <div class="live-card-content">
+                    <div class="live-card-title">{{ session.content_node.title }}</div>
+                    <div class="live-card-meta">
+                        <span>{{ session.content_node.parent.title|default:session.content_node.course.title }}</span>
+                        <span style="color: var(--danger-color);"><i class="ri-eye-line"></i> {{ session.viewer_count }} Watching</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state-inline" style="grid-column: 1 / -1; padding: 4rem;">
+                <i class="ri-live-line"></i>
+                <p>No active live sessions right now.</p>
+                <p style="font-size:0.875rem; color: var(--text-secondary);">You can start a live session from the Manage Lessons tab.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Live Stream Detail View (hidden initially) -->
+    <div id="live-stream-view" class="live-layout hidden">
+        <div class="live-video-panel">
+            <div class="video-header"><span class="live-badge"><span class="pulse"></span> LIVE</span><h3 id="live-lesson-title">Loading...</h3></div>
+            <div class="video-container">
+                <iframe id="live-video-iframe"
+                    src=""
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    style="width:100%;height:100%;display:block;background:#000;">
+                </iframe>
+            </div>
+            <div style="padding: 1rem;">
+                <button class="btn-primary" id="end-live-btn" style="background: #dc2626;"><i class="ri-stop-circle-line"></i> End Session</button>
+            </div>
+        </div>
+        <div class="live-comments-panel">
+            <div class="comments-header"><h3>Student Comments</h3><span class="viewer-count" id="teacher-viewer-count" style="color:#ef4444; font-weight:bold;"><i class="ri-eye-line"></i> 0 Watching</span></div>
+            <div class="comments-feed" id="comments-feed"></div>
+            <div class="comments-input" style="opacity: 0.5;">
+                <input type="text" placeholder="Read-only mode" disabled>
+                <button class="btn-icon" disabled><i class="ri-send-plane-fill"></i></button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 4. Manage Lessons -->
+<section id="manage-module" class="module-section {% if active_section == 'manage-module' %}active animate-fade-in{% else %}hidden{% endif %}">
+    <div class="module-header flex-header">
+        <div>
+            <h1>Manage Lessons</h1>
+            <p>Edit, reschedule, or change lesson statuses.</p>
+        </div>
+        <a href="/teacher/?section=content-builder-module" class="btn-secondary">
+            <i class="ri-add-line"></i> New Recorded Lesson
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Class Title</th>
+                    <th>Parent / Course</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for lesson in lessons %}
+                <tr>
+                    <td><strong>{{ lesson.title }}</strong></td>
+                    <td><span style="color:var(--text-secondary);font-size:0.875rem">{{ lesson.parent.title|default:lesson.course.title }}</span></td>
+                    <td>
+                        <span class="status-badge status-{{ lesson.status }}">
+                            {% if lesson.status == 'published' %}Published
+                            {% elif lesson.status == 'recorded' %}Recorded
+                            {% elif lesson.status == 'past_live' %}Past Live
+                            {% elif lesson.status == 'live' %}Live Now
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            {% if lesson.status != 'live' %}
+                            <form method="POST" action="{% url 'teacher:start_live' lesson.id %}" style="display:inline;" title="Start Live Session">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-action" style="color:#ef4444;"><i class="ri-live-line"></i></button>
+                            </form>
+                            {% endif %}
+                            <a href="{% url 'teacher:edit_lesson' lesson.id %}" class="btn-action" title="Edit"><i class="ri-pencil-line"></i></a>
+                            <form method="POST" action="{% url 'teacher:delete_lesson' lesson.id %}" style="display:inline;" onsubmit="return confirm('Delete this lesson?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-action delete" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No lessons found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- 5. Attachments -->
+<section id="attachment-module" class="module-section {% if active_section == 'attachment-module' %}active animate-fade-in{% else %}hidden{% endif %}">
+    <div class="module-header">
+        <h1>Add Attachments</h1>
+        <p>Add class materials to existing lessons.</p>
+    </div>
+    <div class="form-card">
+        <form method="POST" action="" id="attachment-form-standalone" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Select Class <span class="required">*</span></label>
+                    <div class="select-wrapper">
+                        <select name="lesson_id" required onchange="document.getElementById('attachment-form-standalone').action = '/teacher/lesson/' + this.value + '/add-attachment/'">
+                            <option value="" disabled selected>Choose a class</option>
+                            {% for lesson in lessons %}
+                            <option value="{{ lesson.id }}">{{ lesson.title }} ({{ lesson.course.title }})</option>
+                            {% endfor %}
+                        </select>
+                        <i class="ri-arrow-down-s-line select-icon"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Attachment Name <span class="required">*</span></label>
+                    <input type="text" name="name" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>File</label>
+                    <input type="file" name="file">
+                </div>
+                <div class="form-group">
+                    <label>Or URL</label>
+                    <input type="url" name="external_url">
+                </div>
+            </div>
+            <button type="submit" class="btn-primary"><i class="ri-attachment-line"></i> Add Attachment</button>
+        </form>
+    </div>
+</section>
+
+<!-- Manage Exams -->
+<section id="exams-module" class="module-section {% if active_section == 'exams-module' %}active animate-fade-in{% else %}hidden{% endif %}">
+    <div class="module-header flex-header">
+        <div>
+            <h1>Manage Exams</h1>
+            <p>Create and manage exams for your courses.</p>
+        </div>
+        <a href="{% url 'teacher:create_exam' %}" class="btn-primary" style="white-space:nowrap;">
+            <i class="ri-add-line"></i> Create New Exam
+        </a>
+    </div>
+
+    <!-- Exams Table -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Exam Title</th>
+                    <th>Course</th>
+                    <th>Subject</th>
+                    <th>Topic</th>
+                    <th>Questions</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for exam in all_exams %}
+                <tr>
+                    <td><strong>{{ exam.title }}</strong></td>
+                    <td>{{ exam.course.title }}</td>
+                    <td>{{ exam.subject.title|default:"--" }}</td>
+                    <td>{{ exam.topic.title|default:"--" }}</td>
+                    <td><span class="status-badge" style="background:#e8f0e6;color:#5f6e5c;">{{ exam.total_questions }}</span></td>
+                    <td>{{ exam.duration_minutes }} min</td>
+                    <td>
+                        <span class="status-badge status-published">
+                            {% if exam.is_published %}Published{% else %}Draft{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'teacher:edit_exam' exam.id %}" class="btn-action" title="Edit"><i class="ri-pencil-line"></i></a>
+                            <form method="POST" action="{% url 'teacher:delete_exam' exam.id %}" style="display:inline;" onsubmit="return confirm('Delete this exam and all its questions?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-action delete" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No exams found. Click "Create New Exam" to get started.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% if request.user.is_super_teacher %}
+<!-- 6. Super Admin: Publish Course -->
+<section id="publish-course-module" class="module-section {% if active_section == 'publish-course-module' %}active animate-fade-in{% else %}hidden{% endif %}">
+    <div class="module-header">
+        <h1>Publish New Course</h1>
+        <p>Create a brand new course and push it to the Course Store.</p>
+    </div>
+    <div class="form-card">
+        <form method="POST" action="{% url 'teacher:publish_course' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Course Title <span class="required">*</span></label>
+                    <input type="text" name="title" required placeholder="e.g. Complete Web Development">
+                </div>
+                <div class="form-group">
+                    <label>Class Level</label>
+                    <div class="select-wrapper">
+                        <select name="class_level_id">
+                            <option value="" selected>None / General</option>
+                            {% for c in class_levels %}
+                            <option value="{{ c.id }}">{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <i class="ri-arrow-down-s-line select-icon"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Assign Instructors (Hold Ctrl/Cmd to select multiple)</label>
+                    <select name="instructor_ids" multiple style="width:100%; height:100px; padding:0.5rem; border:1px solid var(--border-color); border-radius:6px;">
+                        {% for t in all_teachers %}
+                        <option value="{{ t.id }}">{{ t.get_full_name|default:t.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Price (BDT)</label>
+                    <input type="number" name="price" value="0" min="0" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description <span class="required">*</span></label>
+                <textarea name="description" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>What's Included (One item per line)</label>
+                <textarea name="whats_included" rows="3" placeholder="40+ Live Classes&#10;Lifetime Access"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Course Thumbnail (Image)</label>
+                <input type="file" name="thumbnail" accept="image/*">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary" style="background:var(--success-color)"><i class="ri-store-2-fill"></i> Publish to Store</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- 7. Super Admin: Combo Course -->
+<section id="combo-course-module" class="module-section {% if active_section == 'combo-course-module' %}active animate-fade-in{% else %}hidden{% endif %}">
+    <div class="module-header">
+        <h1>Create Combo Course</h1>
+        <p>Bundle multiple existing courses into one offering.</p>
+    </div>
+    <div class="form-card">
+        <form method="POST" action="{% url 'teacher:create_combo' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Combo Title <span class="required">*</span></label>
+                    <input type="text" name="title" required placeholder="e.g. HSC Mastery Bundle">
+                </div>
+                <div class="form-group">
+                    <label>Combo Price (BDT)</label>
+                    <input type="number" name="price" value="0" min="0" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Select Included Courses <span class="required">*</span> (Hold Ctrl/Cmd to select multiple)</label>
+                <select name="component_courses" multiple required style="width:100%; height:150px; padding:0.5rem; border:1px solid var(--border-color); border-radius:6px;">
+                    {% for c in all_courses %}
+                    {% if not c.is_combo %}
+                    <option value="{{ c.id }}">{{ c.title }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Bundle Thumbnail</label>
+                <input type="file" name="thumbnail" accept="image/*">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary" style="background:#8b5cf6"><i class="ri-stack-fill"></i> Create Combo</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- 8. Manage Students -->
+<section id="students-module" class="module-section {% if active_section == 'students-module' %}active animate-fade-in{% else %}hidden{% endif %}">
+    <div class="module-header"><h1>Manage Students</h1><p>Enroll students directly into courses/combos.</p></div>
+    <div class="form-card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1rem;">Manual Enrollment</h3>
+        <form method="POST" action="{% url 'teacher:assign_course' %}">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <div class="select-wrapper">
+                        <select name="student_id" required>
+                            <option value="" disabled selected>Choose a student</option>
+                            {% for std in all_students %}
+                            <option value="{{ std.id }}">{{ std.user_id }} ({{ std.email }})</option>
+                            {% endfor %}
+                        </select><i class="ri-arrow-down-s-line select-icon"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="select-wrapper">
+                        <select name="course_id" required>
+                            <option value="" disabled selected>Choose a course to assign</option>
+                            {% for c in all_courses %}
+                            <option value="{{ c.id }}">{{ c.title }}</option>
+                            {% endfor %}
+                        </select><i class="ri-arrow-down-s-line select-icon"></i>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary"><i class="ri-link"></i> Enroll</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Students Table -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Email</th>
+                    <th>Class Level</th>
+                    <th>Phone</th>
+                    <th>Enrolled Courses</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for std in all_students %}
+                <tr>
+                    <td><strong>{{ std.get_full_name|default:std.username }}</strong></td>
+                    <td><span style="color:var(--text-secondary);font-size:0.875rem">{{ std.email }}</span></td>
+                    <td>{{ std.class_level.name|default:"--" }}</td>
+                    <td>{{ std.phone|default:"--" }}</td>
+                    <td>
+                        {% for c in std.enrolled_courses.all %}
+                            <span class="status-badge status-published" style="display:inline-block; margin:2px;">{{ c.title }}</span>
+                        {% empty %}
+                            <span style="color:var(--text-secondary);font-size:0.875rem">None</span>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No students registered.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- 9. Analytics -->
+<section id="analytics-module" class="module-section {% if active_section == 'analytics-module' %}active animate-fade-in{% else %}hidden{% endif %}">
+    <div class="module-header"><h1>Course Analytics</h1></div>
+    <div class="live-grid">
+        {% for c in all_courses %}
+        <div class="live-card" style="cursor: default; background: var(--card-bg); border: 1px solid var(--border-color);">
+            <div class="live-card-content" style="padding: 1.5rem;">
+                <div style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--primary-color);">
+                    {{ c.title }} {% if c.is_combo %}<span style="background:#8b5cf6;color:white;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:5px;">COMBO</span>{% endif %}
+                </div>
+                <div style="display:flex; flex-direction: column; gap: 0.5rem; color:var(--text-secondary);">
+                    <span style="color: var(--text-primary);"><i class="ri-group-line"></i> <strong>{{ c.student_count }}</strong> Students</span>
+                    <span style="color: #10b981;"><i class="ri-money-dollar-circle-line"></i> ৳{{ c.price }}</span>
+                    <span><i class="ri-book-open-line"></i> {{ c.total_subjects }} Subjects</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- 10. Manage Teachers -->
+<section id="teachers-module" class="module-section {% if active_section == 'teachers-module' %}active animate-fade-in{% else %}hidden{% endif %}">
+    <div class="module-header"><h1>Manage Teachers</h1><p>Register new instructional staff.</p></div>
+    <div class="form-card" style="margin-bottom: 2rem;">
+        <form method="POST" action="{% url 'teacher:add_teacher' %}">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group"><label>First Name</label><input type="text" name="first_name" required></div>
+                <div class="form-group"><label>Last Name</label><input type="text" name="last_name" required></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+                <div class="form-group"><label>User ID</label><input type="text" name="user_id" required></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Temp Password</label><input type="text" name="password" required></div>
+                <div class="form-group" style="display:flex; align-items:center; gap: 0.5rem; margin-top:2rem;">
+                    <input type="checkbox" name="is_super_teacher" id="is_super" style="width:auto;">
+                    <label for="is_super" style="margin:0;">Grant Super Admin Access</label>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">Create Teacher</button>
+        </form>
+    </div>
+
+    <!-- Teachers Table -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Teacher Name</th>
+                    <th>User ID</th>
+                    <th>Email</th>
+                    <th>Admin Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for t in all_teachers %}
+                <tr>
+                    <td><strong>{{ t.get_full_name|default:t.username }}</strong></td>
+                    <td><span style="color:var(--text-secondary);font-size:0.875rem">{{ t.user_id }}</span></td>
+                    <td><span style="color:var(--text-secondary);font-size:0.875rem">{{ t.email }}</span></td>
+                    <td>
+                        {% if t.is_super_teacher %}
+                        <span class="status-badge status-published" style="background: #fef08a; color: #854d0e;"><i class="ri-star-fill"></i> Super Admin</span>
+                        {% else %}
+                        <span class="status-badge" style="background: #f1f5f9; color: #475569;">Standard</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No teachers registered.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- IMPORT FROM EXISTING COURSE - MODAL                     -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="import-modal" style="
+    display: none;
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+">
+    <div style="
+        background: var(--card-bg, #fff);
+        border-radius: 16px;
+        width: min(720px, 95vw);
+        max-height: 88vh;
+        display: flex; flex-direction: column;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+        overflow: hidden;
+        animation: slideUp 0.25s ease;
+    ">
+        <!-- Header -->
+        <div style="
+            padding: 1.25rem 1.75rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(135deg, #778873, #5f6e5c);
+        ">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <i class="ri-download-cloud-2-line" style="font-size:1.4rem; color:#fff;"></i>
+                <div>
+                    <h3 style="margin:0; color:#fff; font-size:1.1rem; font-weight:700;">Import from Existing Course</h3>
+                    <p style="margin:0; color:rgba(255,255,255,0.8); font-size:0.8rem;" id="import-modal-subtitle">Select a course, then click a node to import</p>
+                </div>
+            </div>
+            <button id="btn-close-import-modal" style="
+                background: rgba(255,255,255,0.15); border: none; cursor: pointer;
+                color: #fff; border-radius: 50%; width:34px; height:34px;
+                display:flex; align-items:center; justify-content:center;
+                font-size:1.2rem; transition: background 0.2s;
+            "><i class="ri-close-line"></i></button>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.25rem;">
+
+            <!-- Step 1: Course selector -->
+            <div>
+                <label style="font-size:0.8rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.05em;">
+                    <span style="background:#778873; color:#fff; border-radius:50%; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem; margin-right:6px;">1</span>
+                    Select Source Course
+                </label>
+                <div style="margin-top:0.5rem; position:relative;">
+                    <select id="import-course-select" style="width:100%; padding:0.75rem 1rem; border:2px solid var(--border-color); border-radius:8px; font-size:0.95rem; appearance:none; background:var(--input-bg, #fff);">
+                        <option value="" disabled selected>Loading courses…</option>
+                    </select>
+                    <i class="ri-arrow-down-s-line" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--text-secondary);"></i>
+                </div>
+            </div>
+
+            <!-- Step 2: Source tree -->
+            <div id="import-step2" style="display:none;">
+                <label style="font-size:0.8rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.05em; margin-bottom:0.5rem; display:block;">
+                    <span style="background:#8b5cf6; color:#fff; border-radius:50%; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem; margin-right:6px;">2</span>
+                    Select Node to Import
+                </label>
+
+                <!-- Selected node badge -->
+                <div id="import-selected-badge" style="
+                    display:none; align-items:center; gap:0.5rem;
+                    background: #eef2ff; border: 1px solid #c7d2fe;
+                    border-radius: 8px; padding: 0.6rem 1rem; margin-bottom: 0.75rem;
+                    font-size:0.875rem; color:#5f6e5c;
+                ">
+                    <i class="ri-checkbox-circle-fill" style="color:#778873;"></i>
+                    <span id="import-selected-label">No node selected</span>
+                </div>
+
+                <!-- Tree area -->
+                <div id="import-tree-container" style="
+                    border: 1px solid var(--border-color);
+                    border-radius: 10px;
+                    min-height: 200px;
+                    max-height: 340px;
+                    overflow-y: auto;
+                    background: var(--bg-body, #f8fafc);
+                    padding: 0.5rem 0;
+                ">
+                    <div style="padding:2rem; text-align:center; color:var(--text-secondary);" id="import-tree-loading">
+                        <i class="ri-loader-4-line" style="font-size:1.5rem;"></i> Loading tree…
+                    </div>
+                </div>
+            </div>
+
+            <!-- Destination info -->
+            <div id="import-destination-info" style="
+                background: #f0fdf4; border: 1px solid #86efac;
+                border-radius: 8px; padding: 0.75rem 1rem;
+                font-size: 0.85rem; color: #166534;
+                display: none;
+            ">
+                <i class="ri-arrow-right-circle-line"></i>
+                <span id="import-destination-label">Will be imported as a root node of the current course.</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="
+            padding: 1rem 1.75rem;
+            border-top: 1px solid var(--border-color);
+            display: flex; justify-content: flex-end; gap: 0.75rem;
+            background: var(--bg-subtle, #f8fafc);
+        ">
+            <button id="btn-cancel-import" class="btn-secondary" style="padding:0.65rem 1.25rem;">Cancel</button>
+            <button id="btn-confirm-import" class="btn-primary" disabled
+                style="padding:0.65rem 1.5rem; background:linear-gradient(135deg,#778873,#5f6e5c); border:none; display:inline-flex; align-items:center; gap:0.5rem;">
+                <i class="ri-download-cloud-2-line"></i>
+                <span id="btn-confirm-import-label">Confirm Import</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+#btn-import-content:hover { opacity: 0.88; transform: translateY(-1px); }
+#btn-close-import-modal:hover { background: rgba(255,255,255,0.28) !important; }
+</style>
+
+{% endblock %}

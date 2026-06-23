@@ -1,0 +1,43 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Exam Submitted{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}">
+<link rel="stylesheet" href="{% static 'css/exam.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="exam-submitted-wrap">
+
+    <div class="submitted-icon">
+        <i class="fas fa-check-circle"></i>
+    </div>
+
+    <h1 class="submitted-title">Exam Submitted!</h1>
+    <p class="submitted-subtitle">Your answers have been recorded successfully.</p>
+
+    <div class="submitted-stats">
+        <div class="stat-item">
+            <span class="stat-value">{{ total_answered }}</span>
+            <span class="stat-label">Answered</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{ total_questions }}</span>
+            <span class="stat-label">Total</span>
+        </div>
+    </div>
+
+    <p style="color: var(--text-secondary); font-size: 0.9375rem;">
+        <i class="fas fa-clock" style="color: var(--primary-color); margin-right: 0.25rem;"></i>
+        Submitted at {{ attempt.end_time|date:"d M Y, H:i" }}
+    </p>
+
+    <a href="{% url 'courses:past_exams' %}" class="btn-back-exams">
+        <i class="fas fa-arrow-left"></i>
+        Back to Past Exams
+    </a>
+
+</div>
+{% endblock %}

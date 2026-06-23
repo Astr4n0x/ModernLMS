@@ -1,0 +1,205 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}{{ question.title }} - PDF Viewer{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}?v=2">
+<style>
+    .detail-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .meta-badge-container {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+    }
+
+    .meta-badge {
+        font-size: 0.8125rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: var(--radius-full);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .meta-badge.board {
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+    }
+
+    .meta-badge.year {
+        background-color: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+    }
+
+    .meta-badge.type {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+    }
+
+    .viewer-card {
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .viewer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+    }
+
+    .viewer-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .viewer-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .btn-action.primary {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .btn-action.primary:hover {
+        background-color: var(--primary-hover);
+        color: white;
+    }
+
+    .btn-action.secondary {
+        background-color: var(--bg-body);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-action.secondary:hover {
+        background-color: var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .pdf-frame-wrapper {
+        position: relative;
+        width: 100%;
+        height: 75vh;
+        min-height: 550px;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-body);
+    }
+
+    .pdf-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .fallback-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 3rem;
+        text-align: center;
+        color: var(--text-secondary);
+        gap: 1rem;
+    }
+
+    .fallback-icon {
+        font-size: 3.5rem;
+        color: var(--text-tertiary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <header class="page-header" style="margin-bottom: 0;">
+        <div style="margin-bottom: 1rem;">
+            <a href="{% url 'courses:board_questions' %}"
+                style="display:inline-flex; align-items:center; gap:0.5rem; color:var(--text-secondary); text-decoration:none; font-size:0.875rem; transition:color 0.2s;">
+                <i class="fas fa-arrow-left"></i> Back to Board Questions
+            </a>
+        </div>
+        <h1 class="page-title">{{ question.title }}</h1>
+        <div class="meta-badge-container">
+            <span class="meta-badge board">{{ question.board_name }} Board</span>
+            <span class="meta-badge year">Year {{ question.year }}</span>
+            <span class="meta-badge type">{{ question.exam_type }}</span>
+        </div>
+    </header>
+
+    <div class="viewer-card animate-fade-in">
+        <div class="viewer-header">
+            <h2 class="viewer-title">
+                <i class="fas fa-book-open"></i> Question Paper PDF Reader
+            </h2>
+            <div class="viewer-actions">
+                <a href="{{ question.pdf_file.url }}" download class="btn-action primary">
+                    <i class="fas fa-download"></i> Download PDF
+                </a>
+                <a href="{{ question.pdf_file.url }}" target="_blank" class="btn-action secondary">
+                    <i class="fas fa-external-link-alt"></i> Open in New Tab
+                </a>
+            </div>
+        </div>
+
+        <div class="pdf-frame-wrapper">
+            {% if question.pdf_file %}
+            <iframe class="pdf-frame" src="{{ question.pdf_file.url }}#toolbar=1" type="application/pdf">
+                <div class="fallback-box">
+                    <div class="fallback-icon"><i class="fas fa-file-pdf"></i></div>
+                    <h3>PDF Viewer Not Supported</h3>
+                    <p>Your browser doesn't support viewing PDFs directly. Click download or open in a new tab to read.</p>
+                    <a href="{{ question.pdf_file.url }}" download class="btn-action primary" style="margin-top: 1rem;">
+                        <i class="fas fa-download"></i> Download PDF
+                    </a>
+                </div>
+            </iframe>
+            {% else %}
+            <div class="fallback-box">
+                <div class="fallback-icon"><i class="fas fa-exclamation-circle"></i></div>
+                <h3>No PDF File Uploaded</h3>
+                <p>This board question does not have a PDF document attached yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,392 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero" style="padding: 2rem 1.5rem; text-align: center; background: linear-gradient(135deg, var(--primary-light) 0%, var(--surface) 100%);">
+    <div style="margin: 0 auto; width: 100%; padding: 0 1rem; box-sizing: border-box;">
+        <!-- Hero Slider -->
+        {% if recent_courses %}
+        <div class="hero-slider" style="position: relative; max-width: 1200px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg);">
+            <div class="slider-wrapper" id="heroSliderWrapper" style="display: flex; transition: transform 0.5s ease-in-out;">
+                {% for course in recent_courses %}
+                <a href="{% url 'public:course_detail' course.id %}" class="slide-item" style="flex: 0 0 100%; display: block; position: relative; width: 100%;">
+                    {% if course.thumbnail %}
+                        <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" style="width: 100%; height: 450px; object-fit: cover; display: block;">
+                    {% else %}
+                        <img src="https://via.placeholder.com/1200x450?text={{ course.title|urlencode }}" alt="Placeholder" style="width: 100%; height: 450px; object-fit: cover; display: block;">
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+            
+
+            
+            <!-- Pagination Dots -->
+            <div class="slider-dots" id="sliderDots">
+                {% for course in recent_courses %}
+                <button class="dot-btn {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter0 }}" aria-label="Go to slide {{ forloop.counter }}"></button>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+<style>
+
+
+.slider-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+.dot-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+    padding: 0;
+}
+.dot-btn:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+.dot-btn.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+@media (max-width: 768px) {
+    .slide-item img { height: 200px !important; }
+    
+    .categories-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.75rem !important;
+    }
+    .category-card {
+        padding: 1rem !important;
+        gap: 0.5rem !important;
+    }
+    .category-icon {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 1.2rem !important;
+    }
+    .category-title {
+        font-size: 0.9rem !important;
+    }
+    .category-count {
+        font-size: 0.75rem !important;
+    }
+    
+    .course-carousel {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    .course-card-home {
+        flex-direction: row !important;
+        flex: 1 1 auto !important;
+        align-items: stretch;
+    }
+    .course-thumb-wrapper {
+        width: 40% !important;
+        aspect-ratio: auto !important;
+    }
+    .course-thumb-wrapper img {
+        height: 100% !important;
+    }
+    .course-content-wrapper {
+        width: 60% !important;
+        padding: 0.75rem !important;
+        justify-content: space-between;
+    }
+    .course-desc-mobile, .course-meta-mobile {
+        display: none !important;
+    }
+    .course-title-mobile {
+        font-size: 0.95rem !important;
+        margin-bottom: 0.25rem !important;
+        -webkit-line-clamp: 3 !important;
+    }
+    .course-tags-mobile {
+        margin-bottom: 0.5rem !important;
+    }
+    .course-tags-mobile span {
+        font-size: 0.65rem !important;
+        padding: 0.1rem 0.3rem !important;
+    }
+    .course-price-wrapper {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.25rem;
+    }
+    .course-price-mobile {
+        font-size: 1rem !important;
+    }
+    .course-btn-mobile {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.8rem !important;
+        align-self: flex-end;
+    }
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const wrapper = document.getElementById('heroSliderWrapper');
+    if (!wrapper) return;
+    const slides = wrapper.querySelectorAll('.slide-item');
+    if (slides.length <= 1) {
+        document.getElementById('sliderDots').style.display = 'none';
+        return;
+    }
+
+    const dots = document.querySelectorAll('.dot-btn');
+    
+    let currentIndex = 0;
+    const totalSlides = slides.length;
+    let autoSlideInterval;
+
+    function goToSlide(index) {
+        if (index < 0) index = totalSlides - 1;
+        if (index >= totalSlides) index = 0;
+        currentIndex = index;
+        wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
+        
+        dots.forEach(dot => dot.classList.remove('active'));
+        dots[currentIndex].classList.add('active');
+    }
+
+    function nextSlide() { goToSlide(currentIndex + 1); }
+    function prevSlide() { goToSlide(currentIndex - 1); }
+
+
+
+    dots.forEach(dot => {
+        dot.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            goToSlide(index);
+            resetAutoSlide();
+        });
+    });
+
+    function startAutoSlide() {
+        autoSlideInterval = setInterval(nextSlide, 5000);
+    }
+
+    function resetAutoSlide() {
+        clearInterval(autoSlideInterval);
+        startAutoSlide();
+    }
+
+    startAutoSlide();
+});
+</script>
+
+<!-- Categories Section -->
+<section style="padding: 4rem 1.5rem; background: #eef2ff;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <h2 style="text-align: center; color: #1e3a8a; font-size: 2rem; font-weight: 800; margin-bottom: 3rem;">আমাদের ক্যাটাগরিসমূহ</h2>
+        <div class="categories-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
+            {% for group in grouped_courses %}
+            <div class="category-card" style="background: white; border-radius: 0.75rem; padding: 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onclick="window.location.href='{% url 'public:courses' %}?class_level={{ group.courses.first.class_level.id }}'">
+                <div class="category-icon" style="width: 50px; height: 50px; background: #e8f0e6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #5f6e5c;">
+                    <i class="ri-book-open-fill"></i>
+                </div>
+                <div>
+                    <h3 class="category-title" style="margin: 0; font-size: 1.1rem; color: #1e3a8a; font-weight: 700;">{{ group.title }}</h3>
+                    <p class="category-count" style="margin: 0; font-size: 0.85rem; color: #6b7280;">{{ group.courses|length }} Courses</p>
+                </div>
+            </div>
+            {% endfor %}
+            <div class="category-card" style="background: white; border-radius: 0.75rem; padding: 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onclick="window.location.href='{% url 'public:courses' %}'">
+                <div class="category-icon" style="width: 50px; height: 50px; background: #e8f0e6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #5f6e5c;">
+                    <i class="ri-apps-fill"></i>
+                </div>
+                <div>
+                    <h3 class="category-title" style="margin: 0; font-size: 1.1rem; color: #1e3a8a; font-weight: 700;">All Courses</h3>
+                    <p class="category-count" style="margin: 0; font-size: 0.85rem; color: #6b7280;">Explore Catalog</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Courses Section -->
+<section style="padding: 4rem 1.5rem; background: #f8fafc;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <h2 style="text-align: center; color: #1e3a8a; font-size: 2rem; font-weight: 800; margin-bottom: 4rem;">আমাদের কোর্সসমূহ</h2>
+        
+        {% for group in grouped_courses %}
+        <div style="margin-bottom: 4rem;">
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.5rem; font-weight: 800; color: #1e293b; margin-bottom: 1rem;">{{ group.title }}</h3>
+                <!-- Pill tabs mockup -->
+                <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem;" class="hide-scrollbar">
+                    <span style="background: #1e3a8a; color: white; padding: 0.4rem 1rem; border-radius: 2rem; font-size: 0.85rem; font-weight: 600; white-space: nowrap; cursor: pointer;">All Courses</span>
+                </div>
+            </div>
+            
+            <div class="course-carousel hide-scrollbar" style="display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 1rem;">
+                {% for course in group.courses %}
+                <div class="course-card-home" style="flex: 0 0 320px; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; flex-direction: column;">
+                    <div class="course-thumb-wrapper" style="position: relative; width: 100%; aspect-ratio: 1920 / 738; background: #f8fafc;">
+                        {% if course.thumbnail %}
+                            <img src="{{ course.thumbnail.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <img src="https://via.placeholder.com/600x400?text={{ course.title|urlencode }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% endif %}
+                        <div style="position: absolute; top: 1rem; left: 1rem; background: #ef4444; color: white; padding: 0.2rem 0.6rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 700;">
+                            {% if course.is_free %}FREE{% else %}PREMIUM{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="course-content-wrapper" style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+                        <!-- Tags -->
+                        <div class="course-tags-mobile" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
+                            <span style="background: #f1f5f9; color: #475569; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600; border: 1px solid #cbd5e1;">{{ course.category|default:course.class_level }}</span>
+                            {% if course.batch_year %}
+                                <span style="background: #f1f5f9; color: #475569; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600; border: 1px solid #cbd5e1;">{{ course.batch_year }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <h3 class="course-title-mobile" style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 0.75rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ course.title }}</h3>
+                        
+                        <p class="course-desc-mobile" style="font-size: 0.9rem; color: #64748b; margin-bottom: 1rem; flex: 1;">{{ course.description|truncatewords:12 }}</p>
+                        
+                        <div class="course-meta-mobile" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px dashed #cbd5e1;">
+                            <span style="font-size: 0.85rem; color: #475569; font-weight: 600;"><i class="ri-vidicon-fill" style="color: #A1BC98;"></i> {{ course.total_lessons }} Lessons</span>
+                            <span style="font-size: 0.85rem; color: #475569; font-weight: 600;"><i class="ri-folder-open-fill" style="color: #A1BC98;"></i> {{ course.total_subjects }} Subjects</span>
+                        </div>
+                        
+                        <!-- Price & Button -->
+                        <div class="course-price-wrapper" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="course-price-mobile" style="font-weight: 800; color: #0f172a; font-size: 1.2rem;">
+                                {% if course.is_free %}
+                                    Free
+                                {% else %}
+                                    {% if course.discount_price %}
+                                        <div style="font-size: 0.75rem; color: #94a3b8; text-decoration: line-through;">৳{{ course.price }}</div>
+                                    {% endif %}
+                                    ৳{{ course.discount_price|default:course.price }}
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'public:course_detail' course.id %}" class="course-btn-mobile" style="background: #eab308; color: #000; padding: 0.6rem 1.25rem; border-radius: 0.5rem; font-weight: 700; font-size: 0.9rem; text-decoration: none; display: inline-block; transition: background 0.2s;">বিস্তারিত দেখুন</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+            <p style="text-align: center; color: #64748b; width: 100%;">No courses available at this time.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Why Choose Us Section -->
+<section style="padding: 5rem 1.5rem; background: #eef2ff;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <h2 style="text-align: center; color: #1e3a8a; font-size: 2rem; font-weight: 800; margin-bottom: 4rem;">মডার্ন এলএমএস-এর কোর্স কেন এনরোল করবে?</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <!-- Card 1 -->
+            <div style="background: white; padding: 3rem 2rem; border-radius: 1rem; text-align: center; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border-bottom: 4px solid #3b82f6;">
+                <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: #dbeafe; border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #2563eb; transform: rotate(-5deg);">
+                    <i class="ri-macbook-line"></i>
+                </div>
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 1rem;">লাইভ ও রেকর্ডেড ক্লাস</h3>
+                <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6;">দেশের সেরা শিক্ষকদের সরাসরি তত্ত্বাবধানে লাইভ ক্লাস এবং যেকোনো সময়ে দেখার জন্য রয়েছে রেকর্ডেড ক্লাস।</p>
+            </div>
+            
+            <!-- Card 2 -->
+            <div style="background: white; padding: 3rem 2rem; border-radius: 1rem; text-align: center; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border-bottom: 4px solid #10b981;">
+                <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: #d1fae5; border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #059669; transform: rotate(5deg);">
+                    <i class="ri-file-chart-line"></i>
+                </div>
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 1rem;">এক্সাম ও রেজাল্ট</h3>
+                <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6;">পরীক্ষার প্রস্তুতি যাচাই করতে রয়েছে অধ্যায়ভিত্তিক এমসিকিউ ও মডেল টেস্ট এবং সাথে সাথে রেজাল্ট।</p>
+            </div>
+            
+            <!-- Card 3 -->
+            <div style="background: white; padding: 3rem 2rem; border-radius: 1rem; text-align: center; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border-bottom: 4px solid #f59e0b;">
+                <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: #fef3c7; border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #d97706; transform: rotate(-5deg);">
+                    <i class="ri-question-answer-line"></i>
+                </div>
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 1rem;">ডাউট সলভিং</h3>
+                <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6;">পড়াশোনায় কোনো সমস্যা হলে যেকোনো সময় প্রশ্ন করে আমাদের এক্সপার্ট প্যানেল থেকে সমাধান।</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Row Section -->
+<section style="padding: 4rem 1.5rem; background: #f8fafc;">
+    <div style="max-width: 1000px; margin: 0 auto; background: white; border-radius: 1rem; padding: 2.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 2rem; text-align: center;">
+        <div>
+            <div style="font-size: 2rem; font-weight: 900; color: #ef4444; margin-bottom: 0.5rem;">{{ stats.students }}+</div>
+            <div style="font-size: 0.9rem; font-weight: 700; color: #475569;">মোট শিক্ষার্থী</div>
+        </div>
+        <div style="width: 1px; background: #e2e8f0; min-height: 50px;" class="hide-mobile"></div>
+        <div>
+            <div style="font-size: 2rem; font-weight: 900; color: #3b82f6; margin-bottom: 0.5rem;">{{ stats.courses }}+</div>
+            <div style="font-size: 0.9rem; font-weight: 700; color: #475569;">কোর্সসমূহ</div>
+        </div>
+        <div style="width: 1px; background: #e2e8f0; min-height: 50px;" class="hide-mobile"></div>
+        <div>
+            <div style="font-size: 2rem; font-weight: 900; color: #8b5cf6; margin-bottom: 0.5rem;">১.৫ মিলিয়ন+</div>
+            <div style="font-size: 0.9rem; font-weight: 700; color: #475569;">অ্যাপ ইন্সটল</div>
+        </div>
+        <div style="width: 1px; background: #e2e8f0; min-height: 50px;" class="hide-mobile"></div>
+        <div>
+            <div style="font-size: 2rem; font-weight: 900; color: #10b981; margin-bottom: 0.5rem;">{{ stats.success_rate }}</div>
+            <div style="font-size: 0.9rem; font-weight: 700; color: #475569;">সাকসেস রেট</div>
+        </div>
+        <div style="width: 1px; background: #e2e8f0; min-height: 50px;" class="hide-mobile"></div>
+        <div>
+            <div style="font-size: 2rem; font-weight: 900; color: #f59e0b; margin-bottom: 0.5rem;">২৪/৭</div>
+            <div style="font-size: 0.9rem; font-weight: 700; color: #475569;">সাপোর্ট</div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact/Support Quick Form -->
+<section style="padding: 4rem 1.5rem; background: #e8f0e6;">
+    <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;" class="contact-grid">
+        <div>
+            <h2 style="font-size: 2rem; font-weight: 800; color: #1e3a8a; margin-bottom: 1rem;">যেকোনো প্রয়োজনে কল করুন</h2>
+            <p style="color: #475569; font-size: 1.05rem; margin-bottom: 2rem; line-height: 1.6;">পড়াশোনা, কোর্স এনরোলমেন্ট কিংবা পেমেন্ট সংক্রান্ত যেকোনো প্রয়োজনে আমাদের কল করুন।</p>
+            
+            <div style="display: flex; align-items: center; gap: 1rem; background: white; padding: 1rem 1.5rem; border-radius: 0.75rem; display: inline-flex; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <i class="ri-phone-fill" style="font-size: 1.5rem; color: #ef4444;"></i>
+                <div>
+                    <div style="font-weight: 800; font-size: 1.25rem; color: #ef4444;">16000</div>
+                    <div style="font-size: 0.8rem; color: #64748b;">(সকাল ৯টা - রাত ১১টা)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="background: white; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 1.5rem;">আপনার মতামত জানান</h3>
+            <form action="#" method="POST">
+                <input type="text" placeholder="আপনার নাম" style="width: 100%; padding: 0.75rem 1rem; margin-bottom: 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-family: inherit;">
+                <input type="email" placeholder="ইমেইল" style="width: 100%; padding: 0.75rem 1rem; margin-bottom: 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-family: inherit;">
+                <textarea rows="3" placeholder="মতামত বা প্রশ্ন" style="width: 100%; padding: 0.75rem 1rem; margin-bottom: 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-family: inherit; resize: vertical;"></textarea>
+                <button type="submit" style="width: 100%; background: #1e3a8a; color: white; border: none; padding: 0.85rem; border-radius: 0.5rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.2s;">পাঠিয়ে দিন</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<style>
+@media (max-width: 768px) {
+    .hide-mobile { display: none; }
+    .contact-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
+}
+</style>
+
+{% endblock %}

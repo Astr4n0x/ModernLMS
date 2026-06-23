@@ -1,0 +1,67 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}{{ topic.title }} - Classes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}">
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div style="margin-bottom: 1rem;">
+        <a href="{% url 'courses:subject_detail' topic.subject.id %}"
+            style="display:inline-flex; align-items:center; gap:0.5rem; color:var(--text-secondary); text-decoration:none; font-size:0.875rem; transition:color 0.2s;">
+            <i class="fas fa-arrow-left"></i> Back to {{ topic.subject.title }}
+        </a>
+    </div>
+    <h1 class="page-title">{{ topic.title }}</h1>
+    <p class="page-subtitle">{{ topic.subject.course.title }} » {{ topic.subject.title }}</p>
+</header>
+
+<div id="catalogue-content">
+    {% if not lessons %}
+    <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-play-circle"></i></div>
+        <h3>No classes available</h3>
+        <p>There are no classes added to this topic yet.</p>
+    </div>
+    {% else %}
+    <div class="catalogue-grid">
+        {% for lesson in lessons %}
+        <div class="card animate-fade-in" onclick="window.location.href='{% url 'courses:lesson_detail' lesson.id %}'"
+            style="cursor: pointer;">
+            <div class="card-tag">Class {{ lesson.number }}</div>
+            <h3 class="card-title">{{ lesson.title }}</h3>
+            <p class="card-desc">{{ lesson.description|default:"View this class." }}</p>
+            <div class="card-footer">
+                <div class="card-meta">
+                    <span class="meta-item" style="display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fas fa-video"></i>
+                        {% if lesson.is_live_now %}
+                        <span
+                            style="font-size:0.7rem; background: #fee2e2; color: #991b1b; padding: 0.1rem 0.4rem; border-radius: 999px; animation: pulse 1s infinite;">🔴
+                            LIVE</span>
+                        {% elif lesson.status == 'past_live' %}
+                        <span
+                            style="font-size:0.7rem; background: #fef3c7; color: #92400e; padding: 0.1rem 0.4rem; border-radius: 999px;">Past
+                            Live</span>
+                        {% elif lesson.status == 'recorded' %}
+                        <span
+                            style="font-size:0.7rem; background: #d1fae5; color: #065f46; padding: 0.1rem 0.4rem; border-radius: 999px;">Recorded</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap: 0.5rem; width:60%;">
+                    <a href="{% url 'courses:lesson_detail' lesson.id %}"
+                        style="display:block; text-align:center; background:var(--primary-light); color:var(--primary-color); padding:0.5rem; border-radius:6px; text-decoration:none; font-weight:500; transition:all 0.2s;">
+                        <i class="fas fa-play-circle"></i> Enter Class
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

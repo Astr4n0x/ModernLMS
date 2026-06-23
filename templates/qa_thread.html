@@ -1,0 +1,323 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Q&amp;A Thread #{{ question.pk }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Thread Page ───────────────────────────────────────────── */
+.thread-layout {
+    max-width: 820px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Back + status bar */
+.thread-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color .15s;
+}
+.btn-back:hover { color: #778873; }
+
+/* Status badge */
+.badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .3rem .8rem; border-radius: 999px;
+    font-size: .72rem; font-weight: 700; letter-spacing: .02em;
+}
+.badge-pending     { background: #fef9c3; color: #854d0e; }
+.badge-ai_answered { background: #e8f0e6; color: #3d5c38; }
+.badge-answered    { background: #dcfce7; color: #166534; }
+
+/* Question bubble */
+.question-bubble {
+    background: linear-gradient(135deg, #778873 0%, #5f6e5c 100%);
+    border-radius: 16px;
+    padding: 1.5rem 1.75rem;
+    color: #fff;
+}
+.question-bubble .q-meta {
+    display: flex; align-items: center; gap: .5rem;
+    font-size: .78rem; opacity: .8; margin-bottom: .6rem;
+}
+.question-bubble .q-text {
+    font-size: 1rem; font-weight: 500; line-height: 1.6; word-break: break-word;
+}
+.q-attachments {
+    display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem;
+}
+.q-att-link {
+    display: inline-flex; align-items: center; gap: .35rem;
+    background: rgba(255,255,255,.18); padding: .35rem .85rem;
+    border-radius: 8px; font-size: .8rem; color: #fff;
+    text-decoration: none; transition: background .2s;
+}
+.q-att-link:hover { background: rgba(255,255,255,.28); }
+.q-img-preview {
+    max-width: 100%; max-height: 240px; object-fit: cover;
+    border-radius: 10px; margin-top: .75rem; border: 2px solid rgba(255,255,255,.25);
+}
+
+/* Answer thread */
+.answers-section h3 {
+    font-size: 1rem; font-weight: 700; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: .05em; margin-bottom: 1rem;
+}
+.answer-card {
+    display: flex; gap: 1rem; align-items: flex-start;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: .85rem;
+    transition: box-shadow .2s;
+}
+.answer-card:hover { box-shadow: 0 4px 18px rgba(119,136,115,.09); }
+.answer-card.ai-answer { border-left: 4px solid #A1BC98; }
+.answer-card.human-answer { border-left: 4px solid #10b981; }
+.ans-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+}
+.ans-avatar.ai { background: #e8f0e6; color: #778873; }
+.ans-avatar.human { background: #dcfce7; color: #10b981; }
+.ans-body { flex: 1; }
+.ans-meta { font-size: .78rem; color: var(--text-secondary); margin-bottom: .4rem; display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+.ans-label { font-weight: 700; font-size: .72rem; padding: .18rem .6rem; border-radius: 999px; }
+.label-ai { background: #e8f0e6; color: #3d5c38; }
+.label-human { background: #dcfce7; color: #166534; }
+.ans-text { font-size: .93rem; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; word-break: break-word; }
+.ans-img { max-width: 100%; max-height: 180px; border-radius: 8px; margin-top: .6rem; }
+
+/* Pending notice */
+.pending-notice {
+    background: var(--bg-card); border: 1.5px dashed #fbbf24;
+    border-radius: 14px; padding: 2rem; text-align: center;
+    color: var(--text-secondary);
+}
+.pending-notice i { font-size: 2rem; color: #f59e0b; display:block; margin-bottom:.6rem; }
+.pending-notice p { margin: 0; font-size: .92rem; }
+
+/* Teacher reply form */
+{% if request.user.is_teacher %}
+.reply-card {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 16px; padding: 1.5rem;
+}
+.reply-card h3 { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 1rem; }
+.reply-textarea {
+    width: 100%; min-height: 100px; padding: .75rem 1rem;
+    border: 1.5px solid var(--border-color); border-radius: 10px;
+    font-size: .93rem; font-family: 'Inter', sans-serif;
+    background: var(--bg-main); color: var(--text-primary);
+    resize: vertical; box-sizing: border-box; transition: border-color .2s;
+}
+.reply-textarea:focus { border-color: #A1BC98; outline: none; background: var(--bg-card); }
+.reply-media { display: flex; gap: .75rem; flex-wrap: wrap; margin: .75rem 0; }
+.reply-media label {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .45rem 1rem; border: 1.5px dashed var(--border-color);
+    border-radius: 8px; cursor: pointer; font-size: .82rem;
+    color: var(--text-secondary); transition: all .15s; position: relative;
+}
+.reply-media label:hover { border-color: #A1BC98; color: #778873; }
+.reply-media label input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+.btn-reply {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .65rem 1.5rem;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff; border: none; border-radius: 10px;
+    font-size: .92rem; font-weight: 700; cursor: pointer;
+    transition: opacity .2s, transform .15s;
+}
+.btn-reply:hover { opacity: .9; transform: translateY(-1px); }
+{% endif %}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="thread-layout">
+
+    <!-- Top bar -->
+    <div class="thread-topbar">
+        {% if request.user.is_teacher %}
+            <a href="{% url 'qa:teacher_qa_list' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Q&amp;A Panel</a>
+        {% else %}
+            <a href="{% url 'qa:qa_list' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Q&amp;A</a>
+        {% endif %}
+        <span class="badge badge-{{ question.status }}">
+            {% if question.status == 'pending' %}<i class="fas fa-clock"></i> Pending
+            {% elif question.status == 'ai_answered' %}<i class="fas fa-robot"></i> AI Answered
+            {% else %}<i class="fas fa-check-circle"></i> Answered{% endif %}
+        </span>
+    </div>
+
+    <!-- Question bubble -->
+    <div class="question-bubble">
+        <div class="q-meta">
+            <i class="fas fa-user-circle"></i>
+            {{ question.user.get_full_name|default:question.user.username }} &nbsp;·&nbsp;
+            {{ question.course.title }}
+            {% if question.subject %}&nbsp;·&nbsp;{{ question.subject.title }}{% endif %}
+            &nbsp;·&nbsp; {{ question.created_at|date:"M d, Y H:i" }}
+        </div>
+        <p class="q-text">{{ question.content }}</p>
+
+        <!-- Image attachment -->
+        {% if question.image %}
+        <img src="{{ question.image.url }}" alt="question image" class="q-img-preview">
+        {% endif %}
+
+        <!-- Other attachments -->
+        <div class="q-attachments">
+            {% if question.pdf %}
+            <a href="{{ question.pdf.url }}" class="q-att-link" target="_blank">
+                <i class="fas fa-file-pdf"></i> View PDF
+            </a>
+            {% endif %}
+            {% if question.audio %}
+            <a href="{{ question.audio.url }}" class="q-att-link" target="_blank">
+                <i class="fas fa-microphone"></i> Play Audio
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Answers -->
+    <div class="answers-section">
+        <h3><i class="fas fa-comments"></i> Answers ({{ question.answers.count }})</h3>
+
+        {% if question.answers.all %}
+            {% for ans in question.answers.all %}
+            <div class="answer-card {% if ans.is_ai %}ai-answer{% else %}human-answer{% endif %}">
+                <div class="ans-avatar {% if ans.is_ai %}ai{% else %}human{% endif %}">
+                    <i class="fas {% if ans.is_ai %}fa-robot{% else %}fa-user-tie{% endif %}"></i>
+                </div>
+                <div class="ans-body">
+                    <div class="ans-meta">
+                        <span class="ans-label {% if ans.is_ai %}label-ai{% else %}label-human{% endif %}">
+                            {% if ans.is_ai %}AI Teacher{% else %}{{ ans.responder.get_full_name|default:ans.responder.username }}{% endif %}
+                        </span>
+                        <span>{{ ans.created_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                    <p class="ans-text">{{ ans.content }}</p>
+                    {% if ans.image %}
+                    <img src="{{ ans.image.url }}" alt="answer image" class="ans-img">
+                    {% endif %}
+                    {% if ans.audio %}
+                    <audio controls style="margin-top:.5rem;width:100%;"><source src="{{ ans.audio.url }}"></audio>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            {% if question.answer_type == 'human' or question.answer_type == None %}
+            <div class="pending-notice">
+                <i class="fas fa-hourglass-half"></i>
+                <p>Waiting for your teacher to reply…</p>
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Teacher reply form -->
+    {% if request.user.is_teacher %}
+    <div class="reply-card">
+        <h3><i class="fas fa-reply" style="color:#10b981;"></i> Add Your Reply</h3>
+        <form method="POST" action="{% url 'qa:teacher_qa_reply' question.pk %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <textarea name="content" class="reply-textarea" placeholder="Type your answer…" required></textarea>
+            <div class="reply-media">
+                <label>
+                    <i class="fas fa-image"></i> Image
+                    <input type="file" name="image" accept="image/*">
+                </label>
+                <label>
+                    <i class="fas fa-microphone"></i> Audio
+                    <input type="file" name="audio" accept="audio/*">
+                </label>
+            </div>
+            <button type="submit" class="btn-reply"><i class="fas fa-paper-plane"></i> Send Reply</button>
+        </form>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+// Configure marked to not sanitize blindly, allowing standard markdown
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+    const aiTexts = document.querySelectorAll('.ai-answer .ans-text');
+    aiTexts.forEach(el => {
+        let rawText = el.textContent || el.innerText;
+        
+        let placeholders = [];
+        
+        // Protect $$...$$
+        let text = rawText.replace(/\$\$([\s\S]*?)\$\$/g, function(match) {
+            placeholders.push(match);
+            return `@@MATH_PLACEHOLDER_${placeholders.length - 1}@@`;
+        });
+        // Protect \[...\]
+        text = text.replace(/\\\[([\s\S]*?)\\\]/g, function(match) {
+            placeholders.push(match);
+            return `@@MATH_PLACEHOLDER_${placeholders.length - 1}@@`;
+        });
+        // Protect \(...\)
+        text = text.replace(/\\\(([\s\S]*?)\\\)/g, function(match) {
+            placeholders.push(match);
+            return `@@MATH_PLACEHOLDER_${placeholders.length - 1}@@`;
+        });
+        
+        // Parse markdown
+        let html = marked.parse(text);
+        
+        // Restore math
+        placeholders.forEach((math, i) => {
+            html = html.replace(`@@MATH_PLACEHOLDER_${i}@@`, function() { return math; });
+        });
+        
+        el.innerHTML = html;
+    });
+
+    if (window.MathJax) {
+        MathJax.typesetPromise().catch(console.error);
+    }
+});
+
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}

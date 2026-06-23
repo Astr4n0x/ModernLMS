@@ -1,0 +1,169 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Choose Responder{% endblock %}
+
+{% block extra_css %}
+<style>
+.choice-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+}
+.choice-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    max-width: 560px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(79,70,229,.10);
+    text-align: center;
+}
+.choice-card h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+}
+.choice-card .subtitle {
+    font-size: .88rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+.choice-q-preview {
+    background: var(--bg-main);
+    border-left: 4px solid #A1BC98;
+    border-radius: 8px;
+    padding: .75rem 1rem;
+    font-size: .9rem;
+    color: var(--text-primary);
+    text-align: left;
+    margin-bottom: 2rem;
+    word-break: break-word;
+}
+.choice-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.choice-option {
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1.5rem 1rem;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .6rem;
+    background: none;
+    font-family: 'Inter', sans-serif;
+}
+.choice-option:hover { border-color: #A1BC98; background: rgba(119, 136, 115, 0.05); }
+.choice-option.selected { border-color: #778873; background: rgba(119, 136, 115, 0.1); box-shadow: 0 0 0 4px rgba(161, 188, 152, 0.15); }
+.choice-option i { font-size: 2.4rem; }
+.choice-option.ai i  { color: #778873; }
+.choice-option.human i { color: #10b981; }
+.choice-option .opt-title { font-weight: 700; font-size: .95rem; color: var(--text-primary); }
+.choice-option .opt-desc  { font-size: .76rem; color: var(--text-secondary); }
+
+.btn-confirm {
+    margin-top: 1.75rem;
+    width: 100%;
+    padding: .85rem;
+    background: linear-gradient(135deg, #778873, #A1BC98);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: .97rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    transition: opacity .2s, transform .15s;
+}
+.btn-confirm:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+.btn-confirm:disabled { opacity: .45; cursor: not-allowed; }
+.progress-bar { display: none; height: 3px; background: #A1BC98; border-radius: 3px; margin-top: .6rem; overflow: hidden; }
+.progress-bar .fill { height: 100%; width: 0; background: #778873; animation: fillBar 1.5s linear forwards; }
+@keyframes fillBar { to { width: 100%; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="choice-wrapper">
+    <div class="choice-card">
+        <h2><i class="fas fa-question-circle" style="color:#778873;"></i> Who should answer?</h2>
+        <p class="subtitle">Your question has been saved. Choose how to get an answer.</p>
+
+        <div class="choice-q-preview">{{ question.content|truncatechars:200 }}</div>
+
+        <div class="choice-options">
+            <button class="choice-option ai" id="opt-ai" onclick="select('ai')" type="button">
+                <i class="fas fa-robot"></i>
+                <span class="opt-title">AI Teacher</span>
+                <span class="opt-desc">Get an instant answer from our AI tutor</span>
+            </button>
+            <button class="choice-option human" id="opt-human" onclick="select('human')" type="button">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <span class="opt-title">Human Teacher</span>
+                <span class="opt-desc">Your teacher will reply manually</span>
+            </button>
+        </div>
+
+        <button class="btn-confirm" id="btn-confirm" disabled onclick="confirmChoice()">
+            <i class="fas fa-paper-plane"></i> Confirm
+        </button>
+        <div class="progress-bar" id="progress-bar"><div class="fill"></div></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentChoice = null;
+
+function select(type) {
+    currentChoice = type;
+    document.querySelectorAll('.choice-option').forEach(el => el.classList.remove('selected'));
+    document.getElementById('opt-' + type).classList.add('selected');
+    document.getElementById('btn-confirm').disabled = false;
+}
+
+function confirmChoice() {
+    if (!currentChoice) return;
+    const btn = document.getElementById('btn-confirm');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing…';
+    document.getElementById('progress-bar').style.display = 'block';
+
+    fetch("{% url 'qa:qa_submit' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({ question_id: '{{ question.pk }}', answer_type: currentChoice }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = "{% url 'qa:qa_thread' question.pk %}";
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Confirm';
+            alert('Something went wrong. Please try again.');
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Confirm';
+        alert('Network error. Please try again.');
+    });
+}
+</script>
+{% endblock %}

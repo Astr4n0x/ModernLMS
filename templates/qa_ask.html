@@ -1,0 +1,405 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Ask a Question{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Ask Page ──────────────────────────────────────────────── */
+.ask-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 780px;
+    margin: 0 auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,.05);
+}
+.ask-card h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+.ask-card h1 i { color: #778873; }
+
+.form-group { margin-bottom: 1.25rem; }
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary, #475569);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    transition: border-color .2s;
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+}
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    background: var(--bg-card);
+}
+.form-group textarea { resize: vertical; min-height: 110px; }
+
+/* Media upload row */
+.media-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+.media-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 1rem;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    transition: border-color .2s, background .2s;
+    position: relative;
+    text-align: center;
+}
+.media-btn:hover { border-color: var(--primary-color); background: var(--active-bg); color: var(--primary-color); }
+.media-btn i { font-size: 1.6rem; }
+.media-btn input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+.media-preview {
+    font-size: 0.78rem;
+    color: #A1BC98;
+    font-weight: 600;
+    margin-top: 0.25rem;
+    word-break: break-all;
+    display: none;
+}
+
+/* Image preview thumb */
+#img-thumb {
+    width: 100%;
+    max-height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    display: none;
+}
+
+/* Audio recorder */
+.recorder-row {
+    border: 1.5px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.recorder-row .rec-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .55rem 1.2rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: .88rem;
+    font-weight: 600;
+    transition: opacity .15s;
+}
+#btn-start-rec { background: #ef4444; color: #fff; }
+#btn-stop-rec  { background: #6b7280; color: #fff; display: none; }
+#rec-timer     { font-size: .85rem; color: var(--text-secondary); }
+#audio-playback { display: none; width: 100%; margin-top: .5rem; }
+#rec-status    { font-size:.78rem; color:#ef4444; font-weight:600; }
+
+/* Camera */
+.camera-row {
+    border: 1.5px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+}
+.camera-row h4 { margin: 0 0 .75rem; font-size:.88rem; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+#camera-video { width:100%; border-radius:8px; display:none; max-height:240px; }
+#camera-canvas { display:none; }
+#camera-preview { width:100%; border-radius:8px; display:none; max-height:180px; object-fit:cover; }
+.camera-controls { display:flex; gap:.75rem; flex-wrap:wrap; margin-top:.75rem; }
+.camera-controls button {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .5rem 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: .85rem;
+    font-weight: 600;
+}
+#btn-cam-start  { background:var(--primary-color); color:#fff; }
+#btn-cam-snap   { background:#10b981; color:#fff; display:none; }
+#btn-cam-clear  { background:var(--bg-main); color:var(--text-secondary); display:none; border: 1px solid var(--border-color); }
+
+/* Submit button */
+.btn-submit-qa {
+    width: 100%;
+    padding: 0.9rem;
+    background: linear-gradient(135deg, #778873, #A1BC98);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: opacity .2s, transform .15s;
+    margin-top: 0.5rem;
+}
+.btn-submit-qa:hover { opacity: .9; transform: translateY(-1px); }
+.error-box {
+    background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 10px; padding: .75rem 1rem; margin-bottom:1rem; font-size:.88rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ask-card">
+    <h1><i class="fas fa-pencil-alt"></i> Ask a Question</h1>
+
+    {% if error %}
+    <div class="error-box"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'qa:qa_ask' %}" enctype="multipart/form-data" id="ask-form">
+        {% csrf_token %}
+
+        <!-- Course -->
+        <div class="form-group">
+            <label for="id_course">Course <span style="color:#ef4444">*</span></label>
+            <select name="course_id" id="id_course" required>
+                <option value="" disabled selected>Select your course…</option>
+                {% for c in enrolled_courses %}
+                <option value="{{ c.id }}">{{ c.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Subject (populated via JS) -->
+        <div class="form-group">
+            <label for="id_subject">Subject (optional)</label>
+            <select name="subject_id" id="id_subject">
+                <option value="">- Choose a subject -</option>
+            </select>
+        </div>
+
+        <!-- Question text -->
+        <div class="form-group">
+            <label for="id_content">Your Question <span style="color:#ef4444">*</span></label>
+            <textarea name="content" id="id_content" required placeholder="Describe your doubt in detail…"></textarea>
+        </div>
+
+        <!-- Media uploads -->
+        <div class="media-row">
+            <!-- Image -->
+            <label class="media-btn" id="img-label">
+                <i class="fas fa-image"></i>
+                <span>Attach Image</span>
+                <input type="file" name="image" id="img-input" accept="image/*">
+                <img id="img-thumb" src="" alt="preview">
+                <span class="media-preview" id="img-name"></span>
+            </label>
+
+            <!-- PDF -->
+            <label class="media-btn" id="pdf-label">
+                <i class="fas fa-file-pdf"></i>
+                <span>Attach PDF</span>
+                <input type="file" name="pdf" id="pdf-input" accept=".pdf">
+                <span class="media-preview" id="pdf-name"></span>
+            </label>
+        </div>
+
+        <!-- Hidden audio file sent to server -->
+        <input type="file" name="audio" id="audio-hidden-input" style="display:none" accept="audio/*">
+
+        <!-- Audio recorder -->
+        <div class="recorder-row">
+            <i class="fas fa-microphone" style="font-size:1.4rem;color:#ef4444;"></i>
+            <div style="flex:1;">
+                <div style="font-size:.83rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;">Record Audio</div>
+                <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;">
+                    <button type="button" class="rec-btn" id="btn-start-rec"><i class="fas fa-circle"></i> Record</button>
+                    <button type="button" class="rec-btn" id="btn-stop-rec"><i class="fas fa-stop"></i> Stop</button>
+                    <span id="rec-timer"></span>
+                    <span id="rec-status"></span>
+                </div>
+                <audio controls id="audio-playback"></audio>
+            </div>
+        </div>
+
+        <!-- Camera capture -->
+        <div class="camera-row">
+            <h4><i class="fas fa-camera"></i> Camera Snapshot (optional)</h4>
+            <video id="camera-video" autoplay playsinline></video>
+            <canvas id="camera-canvas"></canvas>
+            <img id="camera-preview" src="" alt="snapshot">
+            <input type="hidden" name="camera_snapshot" id="camera-snapshot-data">
+            <div class="camera-controls">
+                <button type="button" id="btn-cam-start" onclick="startCamera()"><i class="fas fa-video"></i> Open Camera</button>
+                <button type="button" id="btn-cam-snap"  onclick="snapPhoto()"><i class="fas fa-camera"></i> Snap</button>
+                <button type="button" id="btn-cam-clear" onclick="clearCamera()"><i class="fas fa-times"></i> Clear</button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit-qa" id="btn-submit-qa">
+            <i class="fas fa-paper-plane"></i> Submit Question
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Course → Subject cascade ─────────────────────────────── */
+document.getElementById('id_course').addEventListener('change', function() {
+    const courseId = this.value;
+    const subjectSel = document.getElementById('id_subject');
+    subjectSel.innerHTML = '<option value="">Loading…</option>';
+    fetch('/api/subjects/' + courseId + '/')
+        .then(r => r.json())
+        .then(data => {
+            subjectSel.innerHTML = '<option value="">- Choose a subject -</option>';
+            (data.subjects || []).forEach(s => {
+                const o = document.createElement('option');
+                o.value = s.id; o.textContent = s.title;
+                subjectSel.appendChild(o);
+            });
+        });
+});
+
+/* ── Image preview ──────────────────────────────────────────── */
+document.getElementById('img-input').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    document.getElementById('img-name').textContent = file.name;
+    document.getElementById('img-name').style.display = 'block';
+    const reader = new FileReader();
+    reader.onload = e => {
+        const thumb = document.getElementById('img-thumb');
+        thumb.src = e.target.result;
+        thumb.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+});
+
+/* ── PDF name preview ─────────────────────────────────────── */
+document.getElementById('pdf-input').addEventListener('change', function() {
+    const nm = document.getElementById('pdf-name');
+    nm.textContent = this.files[0] ? this.files[0].name : '';
+    nm.style.display = this.files[0] ? 'block' : 'none';
+});
+
+/* ── Audio recorder ───────────────────────────────────────── */
+let mediaRecorder, audioChunks = [], timerInterval;
+const btnStart = document.getElementById('btn-start-rec');
+const btnStop  = document.getElementById('btn-stop-rec');
+const recTimer = document.getElementById('rec-timer');
+const recStatus= document.getElementById('rec-status');
+const audioPlay= document.getElementById('audio-playback');
+
+btnStart.onclick = async () => {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            audioPlay.src = URL.createObjectURL(blob);
+            audioPlay.style.display = 'block';
+            recStatus.textContent = '✔ Recorded';
+            // Attach the blob to the hidden file input
+            const dt = new DataTransfer();
+            dt.items.add(new File([blob], 'recording.webm', { type: 'audio/webm' }));
+            document.getElementById('audio-hidden-input').files = dt.files;
+            stream.getTracks().forEach(t => t.stop());
+        };
+        btnStart.style.display = 'none';
+        btnStop.style.display  = 'inline-flex';
+        recStatus.textContent = '';
+        let secs = 0;
+        timerInterval = setInterval(() => { secs++; recTimer.textContent = secs + 's'; }, 1000);
+    } catch(e) { recStatus.textContent = 'Mic access denied'; }
+};
+btnStop.onclick = () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    clearInterval(timerInterval);
+    btnStop.style.display  = 'none';
+    btnStart.style.display = 'inline-flex';
+    recTimer.textContent   = '';
+};
+
+/* ── Camera ───────────────────────────────────────────────── */
+let cameraStream;
+async function startCamera() {
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById('camera-video');
+        video.srcObject = cameraStream;
+        video.style.display = 'block';
+        document.getElementById('btn-cam-start').style.display = 'none';
+        document.getElementById('btn-cam-snap').style.display  = 'inline-flex';
+    } catch(e) { alert('Camera access denied.'); }
+}
+function snapPhoto() {
+    const video = document.getElementById('camera-video');
+    const canvas= document.getElementById('camera-canvas');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL('image/png');
+    document.getElementById('camera-preview').src = dataUrl;
+    document.getElementById('camera-preview').style.display = 'block';
+    document.getElementById('camera-snapshot-data').value = dataUrl;
+    document.getElementById('btn-cam-snap').style.display  = 'none';
+    document.getElementById('btn-cam-clear').style.display = 'inline-flex';
+    video.style.display = 'none';
+    if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+}
+function clearCamera() {
+    document.getElementById('camera-preview').style.display = 'none';
+    document.getElementById('camera-snapshot-data').value = '';
+    document.getElementById('btn-cam-start').style.display = 'inline-flex';
+    document.getElementById('btn-cam-clear').style.display = 'none';
+}
+</script>
+{% endblock %}

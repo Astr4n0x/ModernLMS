@@ -1,0 +1,142 @@
+{% extends "public/base_public.html" %}
+
+{% block title %}{{ course.title }} | ModernLMS{% endblock %}
+
+{% block content %}
+<!-- Course Header -->
+<div style="background: linear-gradient(135deg, #778873 0%, #5f6e5c 100%); color: white;">
+    <div class="section" style="padding-top: 4rem; padding-bottom: 6rem; display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; align-items: start;">
+        
+        <!-- Info Side -->
+        <div>
+            <h1 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: white; line-height: 1.4;">{{ course.category|default:course.class_level }} | {{ course.title }}</h1>
+            <p style="font-size: 1.05rem; max-width: 800px; color: #e8f0e6; line-height: 1.6; margin-bottom: 0;">{{ course.description|truncatewords:40 }}</p>
+        </div>
+
+        <!-- Sticky Purchase Card -->
+        <div style="margin-bottom: -20rem; position: relative; z-index: 10;">
+            <div style="background: var(--surface); border-radius: 1rem; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; text-align: center; color: var(--text-main); position: sticky; top: 2rem;">
+                
+                <!-- Thumbnail -->
+                {% if course.thumbnail %}
+                    <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" style="width: 100%; height: 220px; object-fit: cover; display: block; border-bottom: 1px solid var(--border);">
+                {% else %}
+                    <img src="https://via.placeholder.com/600x400?text={{ course.title|urlencode }}" alt="Placeholder" style="width: 100%; height: 220px; object-fit: cover; display: block; border-bottom: 1px solid var(--border);">
+                {% endif %}
+
+                <div style="padding: 2rem;">
+                    <div style="font-size: 2.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem; display: flex; justify-content: center; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        {% if course.is_free %}
+                            Free
+                        {% else %}
+                            {% if course.discount_price %}
+                                <span style="font-size: 1.25rem; text-decoration: line-through; color: var(--text-tertiary); font-weight: 400;">৳{{ course.price }}</span>
+                                ৳{{ course.discount_price }}
+                                <span style="background: #ef4444; color: white; font-size: 0.85rem; padding: 0.2rem 0.5rem; border-radius: 0.25rem; margin-left: 0.5rem;">ছাড়</span>
+                            {% else %}
+                                ৳{{ course.price }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    
+                    {% if is_enrolled %}
+                        <a href="/dashboard/" class="btn btn-outline" style="width: 100%; border-color: var(--primary); color: var(--primary);">Go to Course Dashboard</a>
+                    {% else %}
+                        <form method="POST" action="{% url 'courses:initiate_payment' course.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success" style="width: 100%; margin-bottom: 1rem; padding: 1rem; font-size: 1.1rem; font-weight: 700; border-radius: 0.5rem; background-color: #10b981; border: none; color: white;">
+                                {% if course.is_free %}Enroll Now{% else %}কোর্সটি কিনুন{% endif %}
+                            </button>
+                        </form>
+                        <a href="#" class="btn" style="width: 100%; background: #f59e0b; color: white; padding: 1rem; font-size: 1.1rem; font-weight: 700; border-radius: 0.5rem; text-decoration: none; display: block;">কোর্সটি কিভাবে কিনবেন</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<div class="section" style="display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; padding-top: 3rem;">
+    <!-- Main Info Main Column -->
+    <div>
+        <!-- Instructors Section -->
+        <h3 style="color: var(--primary); font-size: 1.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--primary-light); padding-bottom: 0.5rem; display: inline-block;">কোর্স শিক্ষক</h3>
+        <div style="display: flex; gap: 2.5rem; flex-wrap: wrap; margin-bottom: 4rem;">
+            {% for inst in course.instructors.all %}
+            <div style="text-align: center; width: 100px;">
+                {% if inst.profile_photo %}
+                    <img src="{{ inst.profile_photo.url }}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 0.5rem; background: var(--bg-light);">
+                {% else %}
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--bg-light); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--text-muted); margin: 0 auto 0.5rem;"><i class="ri-user-star-fill"></i></div>
+                {% endif %}
+                <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.2;">{{ inst.get_full_name|default:inst.username }}</div>
+                <div style="font-size: 0.8rem; color: var(--primary); margin-top: 0.25rem;">{{ inst.experience|default:"Instructor" }}</div>
+            </div>
+            {% empty %}
+            <div style="color: var(--text-muted);">Expert Instructor</div>
+            {% endfor %}
+        </div>
+
+        <div style="margin-bottom: 3rem;">
+            <h3 style="color: var(--primary); font-size: 1.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--primary-light); padding-bottom: 0.5rem; display: inline-block;">কোর্স ডিটেইলস</h3>
+            <div style="font-size: 1.05rem; line-height: 1.8; color: var(--text-secondary); background: var(--surface); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border);">
+                <strong style="display: block; margin-bottom: 1rem; color: var(--text-main);">কোর্স সম্পর্কে:</strong>
+                {{ course.description|linebreaks }}
+            </div>
+        </div>
+
+        {% if course.what_you_will_learn %}
+        <div style="background: var(--bg-light); border: 1px solid var(--border); border-radius: 1rem; padding: 2rem; margin-bottom: 3rem;">
+            <h3 style="margin-bottom: 1.5rem; color: var(--primary);">What you'll learn</h3>
+            <ul style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; list-style: none; padding-left: 0;">
+                {% for item in course.what_you_will_learn.splitlines %}
+                    {% if item %}
+                    <li style="display: flex; gap: 0.75rem;">
+                        <i class="ri-check-circle-fill" style="color: var(--primary);"></i>
+                        <span style="font-size: 0.95rem; color: var(--text-main);">{{ item }}</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Curriculum Preview -->
+        <h3 style="margin-bottom: 1.5rem; color: var(--primary);">Course Content Summary</h3>
+        <div style="border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; margin-bottom: 3rem;">
+            {% for subject in subjects %}
+            <div style="border-bottom: 1px solid var(--border); padding: 1.25rem 1.5rem; background: var(--surface); display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: 600; color: var(--text-main);">
+                    <i class="ri-folder-open-fill" style="color: var(--primary); margin-right: 0.5rem;"></i> {{ subject.title }}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    {{ subject.children.count }} Topics
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding: 1.5rem; color: var(--text-muted);">Curriculum is currently being updated.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right Column spacing -->
+    <div></div>
+</div>
+
+<!-- FAQs -->
+{% if course.faqs.exists %}
+<div class="section" style="padding-top: 0;">
+    <h3 style="margin-bottom: 1.5rem; text-align: center;">Frequently Asked Questions</h3>
+    <div style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem;">
+        {% for faq in course.faqs.all %}
+        <div style="border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); padding: 1.5rem;">
+            <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text-main);">{{ faq.question }}</h4>
+            <p style="font-size: 0.95rem; color: var(--text-secondary);">{{ faq.answer }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

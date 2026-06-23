@@ -1,0 +1,285 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block title %}Solve Sheets{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Filter Section */
+    .filter-section {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        background: var(--bg-card);
+        padding: 1.25rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+    }
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        min-width: 200px;
+        flex: 1;
+    }
+    .filter-group label {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+    .filter-select {
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-main);
+        color: var(--text-primary);
+        font-size: 1rem;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+
+    /* Grid */
+    .catalogue-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        flex-direction: column;
+        box-shadow: var(--shadow-sm);
+    }
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+    }
+    .card-tag {
+        font-size: 0.75rem;
+        background: var(--primary-light);
+        color: var(--primary-color);
+        padding: 4px 10px;
+        border-radius: 999px;
+        display: inline-block;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        width: max-content;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    .card-meta {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        margin-top: auto;
+        padding-top: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border-color);
+        margin-top: 1rem;
+    }
+
+    .btn-download {
+        background: var(--primary-color);
+        color: #fff;
+        padding: 6px 14px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: background 0.2s;
+    }
+    .btn-download:hover {
+        background: var(--primary-hover);
+        color: #fff;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+        color: var(--text-secondary);
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px dashed var(--border-color);
+    }
+</style>
+{% endblock %}
+
+{% block page_heading %}Solve Sheets{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <h1 class="page-title">Solve Sheets</h1>
+    <p class="page-subtitle">Browse and download solve sheets for your enrolled courses.</p>
+</header>
+
+<div id="catalogue-container">
+    <!-- Filters rendered by JS -->
+</div>
+
+<div id="catalogue-content">
+    <!-- Items rendered by JS -->
+</div>
+
+{{ catalogue_data_json|json_script:"catalogue-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filtering Engine for Catalogue (Student View)
+    document.addEventListener('DOMContentLoaded', function () {
+        const dataElement = document.getElementById('catalogue-data');
+        if (!dataElement) return;
+
+        let catalogueData = [];
+        try {
+            catalogueData = JSON.parse(dataElement.textContent);
+        } catch (e) {
+            console.error("Could not parse catalogue data");
+            return;
+        }
+
+        const container = document.getElementById('catalogue-container');
+        const content = document.getElementById('catalogue-content');
+
+        if (catalogueData.length === 0) {
+            container.style.display = 'none';
+            content.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-file-excel" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem; display: block;"></i>
+                <h3>No solve sheets available.</h3>
+                <p style="margin-top: 0.5rem;">Solve sheets for your enrolled courses will appear here.</p>
+            </div>`;
+            return;
+        }
+
+        // Render Filters
+        container.innerHTML = `
+        <div class="filter-section animate-fade-in">
+            <div class="filter-group">
+                <label for="filter-course">Course</label>
+                <select id="filter-course" class="filter-select">
+                    <option value="all">All Courses</option>
+                    ${catalogueData.map(c => `<option value="${c.id}">${c.title}</option>`).join('')}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filter-subject">Subject</label>
+                <select id="filter-subject" class="filter-select">
+                    <option value="all">All Subjects</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filter-topic">Topic</label>
+                <select id="filter-topic" class="filter-select">
+                    <option value="all">All Topics</option>
+                </select>
+            </div>
+        </div>
+        `;
+
+        const filterCourse = document.getElementById('filter-course');
+        const filterSubject = document.getElementById('filter-subject');
+        const filterTopic = document.getElementById('filter-topic');
+
+        function updateSubjectDropdown() {
+            const courseId = filterCourse.value;
+            let html = '<option value="all">All Subjects</option>';
+            let activeCourses = courseId === 'all' ? catalogueData : catalogueData.filter(c => c.id.toString() === courseId);
+            
+            activeCourses.forEach(c => {
+                c.subjects.forEach(s => {
+                    html += `<option value="${s.id}">${s.title}</option>`;
+                });
+            });
+            filterSubject.innerHTML = html;
+            updateTopicDropdown();
+        }
+
+        function updateTopicDropdown() {
+            const courseId = filterCourse.value;
+            const subjectId = filterSubject.value;
+            let html = '<option value="all">All Topics</option>';
+            let activeCourses = courseId === 'all' ? catalogueData : catalogueData.filter(c => c.id.toString() === courseId);
+            
+            activeCourses.forEach(c => {
+                c.subjects.forEach(s => {
+                    if (subjectId === 'all' || s.id.toString() === subjectId) {
+                        s.topics.forEach(t => {
+                            html += `<option value="${t.id}">${t.title}</option>`;
+                        });
+                    }
+                });
+            });
+            filterTopic.innerHTML = html;
+        }
+
+        function renderSheets() {
+            const cId = filterCourse.value;
+            const sId = filterSubject.value;
+            const tId = filterTopic.value;
+
+            let activeCourses = cId === 'all' ? catalogueData : catalogueData.filter(c => c.id.toString() === cId);
+            let sheetsToRender = [];
+
+            activeCourses.forEach(c => {
+                c.solve_sheets.forEach(sheet => {
+                    let match = true;
+                    if (sId !== 'all' && sheet.subject_id.toString() !== sId) match = false;
+                    if (tId !== 'all' && sheet.topic_id && sheet.topic_id.toString() !== tId) match = false;
+                    
+                    if (match) {
+                        sheetsToRender.push({...sheet, courseTitle: c.title});
+                    }
+                });
+            });
+
+            if (sheetsToRender.length === 0) {
+                content.innerHTML = `<div class="empty-state animate-fade-in"><p>No solve sheets found for selected filters.</p></div>`;
+            } else {
+                let html = '<div class="catalogue-grid">';
+                sheetsToRender.forEach(s => {
+                    html += `
+                    <div class="card animate-fade-in">
+                        <div class="card-tag">${s.courseTitle}</div>
+                        <h3 class="card-title">${s.title}</h3>
+                        <div class="card-meta">
+                            <span><i class="far fa-calendar-alt"></i> ${s.uploaded_at}</span>
+                            <a href="${s.url}" target="_blank" class="btn-download"><i class="fas fa-download"></i> Download</a>
+                        </div>
+                    </div>
+                    `;
+                });
+                html += '</div>';
+                content.innerHTML = html;
+            }
+        }
+
+        filterCourse.addEventListener('change', () => { updateSubjectDropdown(); renderSheets(); });
+        filterSubject.addEventListener('change', () => { updateTopicDropdown(); renderSheets(); });
+        filterTopic.addEventListener('change', renderSheets);
+
+        // Initial setup
+        updateSubjectDropdown();
+        renderSheets();
+    });
+</script>
+{% endblock %}

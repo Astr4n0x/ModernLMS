@@ -1,0 +1,186 @@
+{% extends "base_student.html" %}
+{% load static %}
+
+{% block page_heading %}Edit Profile{% endblock %}
+{% block title %}Edit Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: var(--bg-card);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    .form-section h3 {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+        color: var(--primary-color, #778873);
+        border-bottom: 2px solid var(--border-color, #e5e7eb);
+        padding-bottom: 0.5rem;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary, #4b5563);
+        font-size: 0.9rem;
+    }
+
+    .form-group input, .form-group select {
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-main);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+        outline: none;
+        border-color: var(--primary-color, #778873);
+        box-shadow: 0 0 0 3px rgba(119, 136, 115, 0.2);
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #778873 0%, #A1BC98 100%);
+        color: white;
+        padding: 0.8rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 6px -1px rgba(119, 136, 115, 0.4);
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 10px -1px rgba(119, 136, 115, 0.5);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; padding-bottom: 3rem;">
+    {% if messages %}
+    <div style="margin-bottom: 1.5rem;">
+        {% for message in messages %}
+        <div style="padding: 1rem; border-radius: 8px; background: #d1fae5; color: #065f46; border: 1px solid #34d399; font-weight: 500;">
+            <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'accounts:edit_profile' %}">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <h3>Personal Information</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" value="{{ user.first_name }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" value="{{ user.last_name }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" value="{{ user.email }}">
+                </div>
+                <div class="form-group">
+                    <label>Class Level</label>
+                    <select name="class_level" required>
+                        <option value="Class 8" {% if user.class_level == 'Class 8' %}selected{% endif %}>Class 8</option>
+                        <option value="Class 9" {% if user.class_level == 'Class 9' %}selected{% endif %}>Class 9</option>
+                        <option value="Class 10" {% if user.class_level == 'Class 10' %}selected{% endif %}>Class 10</option>
+                        <option value="Class 11" {% if user.class_level == 'Class 11' %}selected{% endif %}>Class 11</option>
+                        <option value="Class 12" {% if user.class_level == 'Class 12' %}selected{% endif %}>Class 12</option>
+                        <option value="Admission" {% if user.class_level == 'Admission' %}selected{% endif %}>Admission</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Group / Section</label>
+                    <select name="group">
+                        <option value="" {% if not profile.group %}selected{% endif %}>-- Select Group --</option>
+                        <option value="science" {% if profile.group == 'science' %}selected{% endif %}>Science</option>
+                        <option value="commerce" {% if profile.group == 'commerce' %}selected{% endif %}>Commerce</option>
+                        <option value="arts" {% if profile.group == 'arts' %}selected{% endif %}>Arts</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>School / College Name</label>
+                    <input type="text" name="college_name" value="{{ profile.college_name }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Parents Information</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Mother Name</label>
+                    <input type="text" name="mother_name" value="{{ profile.mother_name }}">
+                </div>
+                <div class="form-group">
+                    <label>Mother Phone Number</label>
+                    <input type="tel" name="mother_number" value="{{ profile.mother_number }}">
+                </div>
+                <div class="form-group">
+                    <label>Father Name</label>
+                    <input type="text" name="father_name" value="{{ profile.father_name }}">
+                </div>
+                <div class="form-group">
+                    <label>Father Phone Number</label>
+                    <input type="tel" name="father_number" value="{{ profile.father_number }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Guardian Information (Other than parents)</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Guardian Name</label>
+                    <input type="text" name="guardian_name" value="{{ profile.guardian_name }}">
+                </div>
+                <div class="form-group">
+                    <label>Guardian Phone Number</label>
+                    <input type="tel" name="guardian_number" value="{{ profile.guardian_number }}">
+                </div>
+                <div class="form-group">
+                    <label>Relation with Student</label>
+                    <input type="text" name="guardian_relation" value="{{ profile.guardian_relation }}">
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 1rem;">
+            <button type="submit" class="btn-save">
+                <i class="fas fa-save" style="margin-right: 8px;"></i> Save Profile
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
