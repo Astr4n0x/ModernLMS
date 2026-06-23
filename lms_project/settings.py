@@ -10,7 +10,7 @@ SECRET_KEY = 'django-insecure-lms-project-secret-key-change-in-production'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['.vercel.app']
 
 INSTALLED_APPS = [
     'daphne',
