@@ -17,8 +17,6 @@ A full-featured, modern Learning Management System built for live classes, real-
 
 <br/>
 
-**[🔗 View Repository](https://github.com/Astr4n0x/ModernLMS)**
-
 </div>
 
 ---
