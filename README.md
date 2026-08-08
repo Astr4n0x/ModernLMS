@@ -4,7 +4,7 @@
 
 ### *Online learning that actually feels like a classroom.*
 
-A full-featured, modern Learning Management System built for live classes, real-time interaction, and effortless course management — without the storage headaches or clunky UI most LMS platforms suffer from.
+A full-featured, modern Learning Management System built for live classes, real-time interaction, and effortless course management, without the storage headaches or clunky UI most LMS platforms suffer from.
 
 <br/>
 
@@ -25,7 +25,7 @@ A full-featured, modern Learning Management System built for live classes, real-
 
 ## ✨ Overview
 
-**ModernLMS** is a complete Learning Management System designed from the ground up to eliminate the friction of online education. It brings together **live broadcasting**, **real-time chat**, **AI-assisted Q&A**, **exams**, **discussion groups**, and a **premium, modern UI** — all wrapped in a clean, scalable architecture.
+**ModernLMS** is a complete Learning Management System designed from the ground up to eliminate the friction of online education. It brings together **live broadcasting**, **real-time chat**, **AI-assisted Q&A**, **exams**, **discussion groups**, and a **premium, modern UI**, all wrapped in a clean, scalable architecture.
 
 Built for three audiences:
 
@@ -47,7 +47,7 @@ ModernLMS organizes content in a clean, deeply nestable hierarchy:
                 └── 📎 Attachments (PDF / Slides / Links / Sheets)
 ```
 
-> Scales cleanly up to **5+ nested levels** — powered by a dynamic, multi-level node system in the teacher panel.
+> Scales cleanly up to **5+ nested levels**, powered by a dynamic, multi-level node system in the teacher panel.
 
 ---
 
@@ -58,13 +58,13 @@ ModernLMS organizes content in a clean, deeply nestable hierarchy:
 <td width="50%" valign="top">
 
 ### 🎥 Live + Recorded Classes
-Teachers can go **live** or upload **recorded** sessions — both pulled from **YouTube unlisted links**, keeping server storage requirements minimal.
+Teachers can go **live** or upload **recorded** sessions, both pulled from **YouTube unlisted links**, keeping server storage requirements minimal.
 
 ### 💬 Real-Time Live Chat
-WebSocket-powered chat inspired by YouTube Live — students interact with teachers instantly during broadcasts.
+WebSocket-powered chat inspired by YouTube Live, so students interact with teachers instantly during broadcasts.
 
 ### 👁️ Live Viewer Count
-Teachers see exactly how many students are watching, live — right from their panel.
+Teachers see exactly how many students are watching, live, right from their panel.
 
 ### 🎮 Interactive Video Experience
 Keyboard controls, smooth playback, and a distraction-free viewing environment.
@@ -94,23 +94,23 @@ Integrated payment flow for frictionless course enrollment.
 
 <div align="center">
 
-### 🎒 Students Panel — New Features
+### 🎒 Students Panel: New Features
 
 </div>
 
 | Feature | Description |
 |---|---|
-| 📝 **Exam Page** | Topic-based exams with a **server-side timer** — refreshing the tab won't reset it. Previous attempts are viewable anytime. |
+| 📝 **Exam Page** | Topic-based exams with a **server-side timer**, so refreshing the tab won't reset it. Previous attempts are viewable anytime. |
 | 🆔 **Unique User ID** | Every user gets a unique **8-character numeric ID** for login. |
 | 👤 **Student Profile** | Fully editable profile including personal, parent, and guardian info. |
 | 🔴 **Live Class Section** | All ongoing live classes surface in one dedicated section. |
-| 🤖 **Advanced Q&A** | Ask questions with image, PDF, or audio attachments — answered by a **human teacher or AI** (powered by the OpenAI API). |
+| 🤖 **Advanced Q&A** | Ask questions with image, PDF, or audio attachments, answered by a **human teacher or AI** (powered by the OpenAI API). |
 | 👥 **Discussion Groups** | WhatsApp-inspired group chat, one per course. |
 | ✅ **Solve Sheets** | Access published solve sheets per course. |
 
 <div align="center">
 
-### 🧑‍🏫 Teacher Panel — New Features
+### 🧑‍🏫 Teacher Panel: New Features
 
 </div>
 
@@ -127,8 +127,8 @@ Integrated payment flow for frictionless course enrollment.
 
 </div>
 
-- 🎨 **Premium & Modern UI** — vibrant gradients, clean lines, and a sleek layout designed for focus.
-- 📱 **Fully Mobile Optimized** — app-like horizontal card layout with smooth navigation on any device.
+- 🎨 **Premium & Modern UI**: vibrant gradients, clean lines, and a sleek layout designed for focus.
+- 📱 **Fully Mobile Optimized**: app-like horizontal card layout with smooth navigation on any device.
 
 ---
 
