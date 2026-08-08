@@ -169,14 +169,23 @@ graph TD
 
 ## 📸 Screenshots
 
-> *Add your platform screenshots or a demo GIF here to showcase the UI.*
-
 <div align="center">
-
-| Student Dashboard | Live Class | Teacher Panel |
-|:---:|:---:|:---:|
-| 🖼️ *placeholder* | 🖼️ *placeholder* | 🖼️ *placeholder* |
-
+<table>
+<tr>
+<td width="33%" align="center">
+<b>Student Dashboard</b><br/><br/>
+<img src="https://i.imgur.com/Z8lsOrB.png" width="100%"/>
+</td>
+<td width="33%" align="center">
+<b>Live Class</b><br/><br/>
+<img src="https://i.imgur.com/lhhp7di.png" width="100%"/>
+</td>
+<td width="33%" align="center">
+<b>Teacher Dashboard</b><br/><br/>
+<img src="https://i.imgur.com/qewY67U.png" width="100%"/>
+</td>
+</tr>
+</table>
 </div>
 
 ---
